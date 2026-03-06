@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="glass-card results-card">
+    <h2>Batch Analysis Results</h2>
+
+    {% for r in results %}
+    <div class="result-block">
+
+        <h3>{{ r.image }}</h3>
+
+        <p><b>Crop:</b> {{ r.crop }}</p>
+        <p><b>Disease Identified:</b> {{ r.disease }}</p>
+        <p><b>Confidence:</b> {{ r.confidence }}%</p>
+
+        <p>
+            <b>Severity:</b>
+            {% if r.severity == "Mild" %}
+                <span class="severity mild">Mild</span>
+            {% elif r.severity == "Moderate" %}
+                <span class="severity moderate">Moderate</span>
+            {% else %}
+                <span class="severity severe">Severe</span>
+            {% endif %}
+        </p>
+
+        <p><b>Urgency:</b> {{ r.urgency }}</p>
+
+        <div class="divider"></div>
+
+        <h4>💊 Chemical Treatment</h4>
+        <p>{{ r.chemical }}</p>
+
+        <h4>🌱 Organic Treatment</h4>
+        <p>{{ r.organic }}</p>
+
+        <h4>🛡 Preventive Measures</h4>
+        <p>{{ r.prevention }}</p>
+
+    </div>
+    {% endfor %}
+
+    <a href="/explain">
+        <button>View Explainable AI</button>
+    </a>
+</div>
+
+{% endblock %}

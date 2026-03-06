@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SmartLeaf – AI Crop Disease System</title>
+</head>
+<body>
+    <h1>🌿 SmartLeaf</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="image" required>
+        <button type="submit">Analyze</button>
+    </form>
+
+    {% if result %}
+        <h2>🧠 AI Result</h2>
+        <p><b>Disease:</b> {{ result.disease }}</p>
+        <p><b>Confidence:</b> {{ result.confidence }}%</p>
+        <p><b>Severity:</b> {{ result.severity }}</p>
+        <p><b>Urgency:</b> {{ result.urgency }}</p>
+
+        <h3>💊 Chemical Treatment</h3>
+        <p>{{ result.chemical }}</p>
+
+        <h3>🌱 Organic Treatment</h3>
+        <p>{{ result.organic }}</p>
+
+        <h3>🛡 Prevention</h3>
+        <p>{{ result.prevention }}</p>
+
+        <h3>🔍 Explainable AI (Grad-CAM)</h3>
+        <img src="{{ heatmap }}" width="400">
+    {% endif %}
+</body>
+</html>

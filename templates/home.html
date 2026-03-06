@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="home-center">
+    <div class="glass-card">
+        <h1>SmartLeaf</h1>
+
+        <div style="display: flex; justify-content: center; margin-top: 20px;">
+            <a href="{{ url_for('detect') }}">
+                <button>Start Analysis</button>
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

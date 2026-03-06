@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="glass-card results-card">
+    <h2>Explainable AI – Model Interpretation</h2>
+
+    {% for r in results %}
+    <div class="result-block">
+
+        <h3>{{ r.image }}</h3>
+
+        <p><b>Crop:</b> {{ r.crop }}</p>
+        <p><b>Disease Identified:</b> {{ r.disease }}</p>
+
+        {% if r.disease != "Healthy" %}
+            <p><b>Severity:</b> {{ r.severity }}</p>
+        {% endif %}
+
+        <div class="divider"></div>
+
+        <h4>Original Image</h4>
+        <img class="explain-img"
+             src="{{ url_for('static', filename=r.image_path) }}"
+             alt="Original Image">
+
+        <h4>Grad-CAM Heatmap</h4>
+        <img class="explain-img"
+             src="{{ url_for('static', filename=r.gradcam) }}"
+             alt="Grad-CAM Heatmap">
+
+        <div class="divider"></div>
+
+        <h4>What is the model focusing on?</h4>
+        <p class="explain-text">
+            {{ r.explanation }}
+        </p>
+
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

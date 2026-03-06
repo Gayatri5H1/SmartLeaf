@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SmartLeaf</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<!-- Premium Background -->
+<div class="background">
+    <div class="blur b1"></div>
+    <div class="blur b2"></div>
+</div>
+
+<nav>
+    <div class="logo">🌿 SmartLeaf</div>
+    <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/detect">Detect</a>
+        <a href="/result">Results</a>
+        <a href="/explain">Explainable AI</a>
+    </div>
+</nav>
+
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
+
+
+
+</body>
+</html>

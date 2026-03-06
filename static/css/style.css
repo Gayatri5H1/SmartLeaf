@@ -1,0 +1,271 @@
+/* =========================
+   RESET
+========================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+/* =========================
+   BODY
+========================= */
+body {
+    min-height: 100vh;
+    background: #0b0f14;
+    color: #ffffff;
+    overflow-x: hidden;
+}
+
+/* =========================
+   BACKGROUND BLOBS
+========================= */
+.background .blur {
+    position: fixed;
+    width: 420px;
+    height: 420px;
+    border-radius: 50%;
+    filter: blur(140px);
+    opacity: 0.45;
+    animation: float 20s ease-in-out infinite;
+    z-index: 0;
+}
+
+.background .b1 {
+    background: #1abc9c;
+    top: 5%;
+    left: 10%;
+}
+
+.background .b2 {
+    background: #2ecc71;
+    bottom: 10%;
+    right: 15%;
+    animation-delay: 7s;
+}
+
+@keyframes float {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-50px); }
+    100% { transform: translateY(0); }
+}
+
+/* =========================
+   NAVBAR
+========================= */
+nav {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 40px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+nav .logo {
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+nav a {
+    color: #dfe6e9;
+    text-decoration: none;
+    margin-left: 25px;
+    font-weight: 500;
+}
+
+nav a:hover {
+    color: #2ecc71;
+}
+
+/* =========================
+   MAIN CONTAINER
+========================= */
+.container {
+    position: relative;
+    z-index: 2;
+    min-height: calc(100vh - 140px);
+    padding: 40px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+/* =========================
+   HOME PAGE CENTERING
+========================= */
+.home-center {
+    width: 100%;
+    height: calc(100vh - 140px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* =========================
+   GLASS CARD (GLOBAL)
+========================= */
+.glass-card {
+    padding: 60px 90px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+}
+
+/* =========================
+   TITLES
+========================= */
+.glass-card h1 {
+    font-size: 4.5rem;
+    letter-spacing: 3px;
+    margin-bottom: 35px;
+    text-align: center;
+}
+
+.glass-card h2 {
+    font-size: 2rem;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.glass-card h3 {
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+    color: #2ecc71;
+}
+
+.glass-card h4 {
+    margin-top: 15px;
+    font-size: 1.05rem;
+    color: #dfe6e9;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+.glass-card button {
+    padding: 14px 48px;
+    font-size: 1.1rem;
+    background: linear-gradient(135deg, #2ecc71, #1abc9c);
+    color: #0b0f14;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-card button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(46, 204, 113, 0.4);
+}
+
+/* =========================
+   FORM ELEMENTS
+========================= */
+.glass-card input[type="file"] {
+    margin-top: 10px;
+    font-size: 1rem;
+    color: #dfe6e9;
+}
+
+.hint-text {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    color: #b2bec3;
+}
+
+/* =========================
+   RESULTS & EXPLAIN SHARED
+========================= */
+.results-card {
+    max-width: 900px;
+    width: 100%;
+    text-align: left;
+}
+
+.result-block {
+    padding: 25px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.result-block:last-child {
+    border-bottom: none;
+}
+
+/* Divider */
+.divider {
+    margin: 18px 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* =========================
+   SEVERITY BADGES
+========================= */
+.severity {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.severity.mild {
+    background: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+}
+
+.severity.moderate {
+    background: rgba(241, 196, 15, 0.2);
+    color: #f1c40f;
+}
+
+.severity.severe {
+    background: rgba(231, 76, 60, 0.25);
+    color: #e74c3c;
+}
+
+/* =========================
+   EXPLAIN PAGE IMAGES
+========================= */
+.explain-images {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin: 25px 0;
+    flex-wrap: wrap;
+}
+
+.explain-img {
+    width: 280px;
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+}
+
+/* Explanation text */
+.explain-text {
+    margin-top: 10px;
+    line-height: 1.6;
+    font-size: 0.95rem;
+    color: #ecf0f1;
+    max-width: 760px;
+}
+
+/* =========================
+   FOOTER
+========================= */
+footer {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 15px;
+    font-size: 0.9rem;
+    color: #b2bec3;
+    background: rgba(255, 255, 255, 0.03);
+}
