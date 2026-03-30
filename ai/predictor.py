@@ -4,8 +4,7 @@ import tensorflow as tf
 import cv2
 
 # Load trained model
-model = tf.keras.models.load_model("models/leaf_mobilenet.h5")
-
+model = tf.keras.models.load_model("models/leaf_mobilenet.h5", compile=False)
 # Load class labels
 with open("models/class_labels.json") as f:
     class_labels = json.load(f)

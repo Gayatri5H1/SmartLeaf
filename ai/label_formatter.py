@@ -21,14 +21,14 @@ def format_disease_label(label):
 
 
 def extract_crop(label):
-    """
-    Extracts crop name from label.
+    if "___" in label:
+        return label.split("___")[0]
 
-    Pepper__bell___Bacterial_spot -> Pepper Bell
-    Tomato___Early_blight -> Tomato
-    """
+    # fallback (if crop missing)
+    known_crops = ["Potato", "Tomato", "Pepper", "Corn", "Apple"]
 
-    crop = label.split("___")[0]
-    crop = crop.replace("_", " ").title()
+    for crop in known_crops:
+        if label.lower().startswith(crop.lower()):
+            return crop
 
-    return crop
+    return "Unknown"

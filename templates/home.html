@@ -1,16 +1,139 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SmartLeaf</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+</head>
 
-{% block content %}
-<div class="home-center">
-    <div class="glass-card">
-        <h1>SmartLeaf</h1>
+<body>
 
-        <div style="display: flex; justify-content: center; margin-top: 20px;">
-            <a href="{{ url_for('detect') }}">
-                <button>Start Analysis</button>
-            </a>
+<!-- NAVBAR -->
+<header class="navbar">
+    <h2>🌿 SmartLeaf</h2>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-text">
+        <img src="https://cdn-icons-png.flaticon.com/512/2909/2909763.png" width="120">
+        <h1>Smart Plant Disease Detection</h1>
+        <p>Upload a leaf image and get accurate disease diagnosis with treatment suggestions.</p>
+    </div>
+</section>
+
+<!-- UPLOAD -->
+<section class="upload-section">
+    <div class="card">
+
+        <h2>Upload Leaf Image</h2>
+
+        <!-- DROP AREA -->
+        <div id="drop-area">
+            <p>Drag & Drop your images 🌿</p>
+            <p>or click to upload</p>
+            <input type="file" name="images" id="fileInput" multiple hidden>
         </div>
 
+        <!-- MULTI PREVIEW -->
+        <div id="preview-container"></div>
+
+        <!-- BUTTON -->
+        <button onclick="submitForm()">Analyze Crop</button>
+
     </div>
+</section>
+
+<!-- LOADER -->
+<div id="loader" style="display:none;">
+    <div class="spinner"></div>
+    <p>Analyzing leaf... 🌿</p>
 </div>
-{% endblock %}
+
+<!-- FOOTER -->
+<footer>
+    <p>© 2026 SmartLeaf | Built for Smart Farming 🌾</p>
+</footer>
+
+<script>
+const dropArea = document.getElementById("drop-area");
+const fileInput = document.getElementById("fileInput");
+const previewContainer = document.getElementById("preview-container");
+const loader = document.getElementById("loader");
+
+// CLICK → open picker
+dropArea.addEventListener("click", () => {
+    fileInput.click();
+});
+
+// FILE SELECT
+fileInput.addEventListener("change", handleFiles);
+
+// DRAG OVER
+dropArea.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropArea.classList.add("highlight");
+});
+
+// DRAG LEAVE
+dropArea.addEventListener("dragleave", () => {
+    dropArea.classList.remove("highlight");
+});
+
+// DROP
+dropArea.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropArea.classList.remove("highlight");
+
+    const files = e.dataTransfer.files;
+    fileInput.files = files;
+    handleFiles();
+});
+
+// MULTI IMAGE PREVIEW
+function handleFiles() {
+    previewContainer.innerHTML = "";
+
+    const files = fileInput.files;
+
+    for (let i = 0; i < files.length; i++) {
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(files[i]);
+        img.classList.add("preview-img");
+        previewContainer.appendChild(img);
+    }
+}
+
+// SUBMIT FORM
+function submitForm() {
+    const files = fileInput.files;
+
+    if (!files || files.length === 0) {
+        alert("Please upload at least one image");
+        return;
+    }
+
+    const formData = new FormData();
+
+    for (let i = 0; i < files.length; i++) {
+        formData.append("images", files[i]);
+    }
+
+    loader.style.display = "flex";
+
+    fetch("/predict", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => {
+        if (response.redirected) {
+            window.location.href = response.url;
+        }
+    })
+    .catch(err => console.error(err));
+}
+</script>
+
+</body>
+</html>

@@ -1,42 +1,49 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="glass-card results-card">
-    <h2>Explainable AI – Model Interpretation</h2>
+<div class="explain-container">
+
+    <h1>🧠 Explainable AI Insights</h1>
 
     {% for r in results %}
-    <div class="result-block">
+    <div class="explain-card">
 
-        <h3>{{ r.image }}</h3>
+        <!-- HEADER -->
+        <div class="header">
+            <h2>{{ r.image }}</h2>
+            <span class="badge {{ r.severity|lower }}">{{ r.severity }}</span>
+        </div>
 
-        <p><b>Crop:</b> {{ r.crop }}</p>
-        <p><b>Disease Identified:</b> {{ r.disease }}</p>
+        <!-- INFO -->
+        <div class="info">
+            <p><strong>Crop:</strong> {{ r.crop }}</p>
+            <p><strong>Disease:</strong> {{ r.disease }}</p>
+        </div>
 
-        {% if r.disease != "Healthy" %}
-            <p><b>Severity:</b> {{ r.severity }}</p>
-        {% endif %}
+        <!-- IMAGE COMPARISON -->
+        <div class="image-grid">
 
-        <div class="divider"></div>
+            <div class="image-box">
+                <h4>Original Image</h4>
+                <img src="{{ url_for('static', filename=r.image_path) }}">
+            </div>
 
-        <h4>Original Image</h4>
-        <img class="explain-img"
-             src="{{ url_for('static', filename=r.image_path) }}"
-             alt="Original Image">
+            <div class="image-box">
+                <h4>Grad-CAM Heatmap</h4>
+                <img src="{{ url_for('static', filename=r.gradcam) }}">
+            </div>
 
-        <h4>Grad-CAM Heatmap</h4>
-        <img class="explain-img"
-             src="{{ url_for('static', filename=r.gradcam) }}"
-             alt="Grad-CAM Heatmap">
+        </div>
 
-        <div class="divider"></div>
-
-        <h4>What is the model focusing on?</h4>
-        <p class="explain-text">
-            {{ r.explanation }}
-        </p>
+        <!-- EXPLANATION -->
+        <div class="explanation">
+            <h4>🔍 Model Explanation</h4>
+            <p>{{ r.explanation }}</p>
+        </div>
 
     </div>
     {% endfor %}
+
 </div>
 
 {% endblock %}

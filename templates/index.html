@@ -4,31 +4,114 @@
     <title>SmartLeaf – AI Crop Disease System</title>
 </head>
 <body>
+
     <h1>🌿 SmartLeaf</h1>
 
+    <!-- Upload Form -->
     <form method="POST" enctype="multipart/form-data">
         <input type="file" name="image" required>
         <button type="submit">Analyze</button>
     </form>
 
     {% if result %}
+
         <h2>🧠 AI Result</h2>
         <p><b>Disease:</b> {{ result.disease }}</p>
         <p><b>Confidence:</b> {{ result.confidence }}%</p>
         <p><b>Severity:</b> {{ result.severity }}</p>
         <p><b>Urgency:</b> {{ result.urgency }}</p>
 
+        <!-- 🌐 LANGUAGE SELECT -->
+        <h3>🌐 Select Language</h3>
+        <select onchange="changeLanguage(this.value)">
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+            <option value="te">Telugu</option>
+        </select>
+
+        <!-- 🌿 TREATMENT + PREVENTION -->
         <h3>💊 Chemical Treatment</h3>
-        <p>{{ result.chemical }}</p>
+        <p id="chemical">{{ result.chemical }}</p>
 
         <h3>🌱 Organic Treatment</h3>
-        <p>{{ result.organic }}</p>
+        <p id="organic">{{ result.organic }}</p>
 
         <h3>🛡 Prevention</h3>
-        <p>{{ result.prevention }}</p>
+        <p id="prevention">{{ result.prevention }}</p>
 
+        <!-- 🔊 AUDIO -->
+        <button type="button" onclick="playAudio()">🔊 Listen</button>
+        <!-- 🔍 Explainable AI -->
         <h3>🔍 Explainable AI (Grad-CAM)</h3>
         <img src="{{ heatmap }}" width="400">
+
+        <!-- 🔥 STORE ORIGINAL ENGLISH -->
+        <script>
+            let originalData = {
+                chemical: `{{ result.chemical_en }}`,
+                organic: `{{ result.organic_en }}`,
+                prevention: `{{ result.prevention_en }}`
+            };
+        </script>
+
     {% endif %}
+
 </body>
+
+<!-- 🔥 LANGUAGE SWITCH SCRIPT -->
+<script>
+async function changeLanguage(lang) {
+
+    // English → instant restore
+    if (lang === "en") {
+        document.getElementById("chemical").innerText = originalData.chemical;
+        document.getElementById("organic").innerText = originalData.organic;
+        document.getElementById("prevention").innerText = originalData.prevention;
+        return;
+    }
+
+    let response = await fetch("/translate", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            text: originalData,
+            lang: lang
+        })
+    });
+
+    let data = await response.json();
+
+    document.getElementById("chemical").innerText = data.chemical;
+    document.getElementById("organic").innerText = data.organic;
+    document.getElementById("prevention").innerText = data.prevention;
+}
+</script>
+
+<!-- 🔊 AUDIO SCRIPT -->
+<script>
+async function playAudio() {
+
+    let text =
+        document.getElementById("chemical").innerText + ". " +
+        document.getElementById("organic").innerText + ". " +
+        document.getElementById("prevention").innerText;
+
+    let lang = document.querySelector("select").value;
+
+    let response = await fetch("/audio", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            text: text,
+            lang: lang
+        })
+    });
+
+    let data = await response.json();
+
+    let audio = new Audio("/" + data.audio);
+    audio.play();
+}
+</script>
+
 </html>
