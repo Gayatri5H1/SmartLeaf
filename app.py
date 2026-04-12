@@ -134,6 +134,11 @@ def predict():
 
     return redirect(url_for("result"))
 
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    if request.method == 'POST':
+        return redirect(url_for('predict'))
+    return render_template('index.html')
 
 # ---------------- RESULT ----------------
 @app.route("/result")
