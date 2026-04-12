@@ -1,6 +1,7 @@
-﻿flask
+flask
 tensorflow-cpu==2.10.0
 numpy==1.23.5
+protobuf==3.19.6
 opencv-python
 pillow
 gtts
