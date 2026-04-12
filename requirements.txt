@@ -1,9 +1,9 @@
 ﻿flask
 tensorflow-cpu==2.10.0
-numpy
+numpy==1.23.5
 opencv-python
 pillow
 gtts
-googletrans
+googletrans==4.0.0-rc1
 reportlab
 gunicorn
