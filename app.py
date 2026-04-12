@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for
 import os
 import tensorflow as tf
 from monitoring.disease_logger import log_detection
@@ -11,13 +11,22 @@ from ai.explanations import explain_disease
 from recommendation.recommender import get_recommendation
 from reports.report_generator import generate_report
 
-
 app = Flask(__name__)
 
 UPLOAD_FOLDER = "static/outputs"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-model = tf.keras.models.load_model("models/leaf_mobilenet.h5", compile=False)
+# ✅ LAZY LOAD MODEL (IMPORTANT)
+model = None
+
+def get_model():
+    global model
+    if model is None:
+        print("🚀 Loading model...")
+        model = tf.keras.models.load_model("models/leaf_mobilenet.h5", compile=False)
+        model.make_predict_function()
+    return model
+
 
 latest_results = []
 
@@ -54,13 +63,17 @@ def predict():
     if not files or files[0].filename == "":
         return "No images uploaded ❌"
 
+    # ✅ Load model only when needed
+    model_instance = get_model()
+
     for file in files:
         if file and file.filename != "":
 
             image_path = os.path.join(UPLOAD_FOLDER, file.filename)
             file.save(image_path)
 
-            disease, confidence = predict_disease(image_path)
+            # ✅ Pass model here
+            disease, confidence = predict_disease(image_path, model_instance)
 
             raw_disease = disease
             clean_disease = format_disease_label(raw_disease)
@@ -155,6 +168,7 @@ def explain():
     return render_template("explain.html", results=latest_results)
 
 
+# ---------------- RUN ----------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
