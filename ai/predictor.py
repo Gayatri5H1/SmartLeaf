@@ -9,7 +9,7 @@ model = tf.keras.models.load_model("models/leaf_mobilenet.h5", compile=False)
 with open("models/class_labels.json") as f:
     class_labels = json.load(f)
 
-def predict_disease(image_path):
+def predict_disease(image_path, model):
     img = cv2.imread(image_path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, (160, 160))
