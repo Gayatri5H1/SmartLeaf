@@ -55,6 +55,7 @@ def detect():
 # ---------------- PREDICT ----------------
 @app.route('/predict', methods=['POST'])
 def predict():
+    print("🔥 PREDICT HIT")  # DEBUG
     global latest_results
     latest_results = []
 
