@@ -15,7 +15,7 @@ from ai.predictor import predict_disease
 from ai.severity import estimate_severity
 from ai.explanations import explain_disease
 from recommendation.recommender import get_recommendation
-from ai.explainability import generate_gradcam
+#from ai.explainability import generate_gradcam
 
 from reports.report_generator import generate_report
 
@@ -131,11 +131,11 @@ def predict():
                 "static", "outputs", f"gradcam_{file.filename}"
             )
 
-            generate_gradcam(
-                image_path=image_path,
-                model=model,
-                output_path=gradcam_output_path
-            )
+#            generate_gradcam(
+ #               image_path=image_path,
+  #              model=model,
+   #             output_path=gradcam_output_path
+    #        )
 
             # ✅ ORIGINAL ENGLISH TEXT (IMPORTANT)
             full_text_en = (
