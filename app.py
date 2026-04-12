@@ -2,12 +2,6 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify
 import os
 import tensorflow as tf
 from monitoring.disease_logger import log_detection
-from gtts import gTTS
-from googletrans import Translator
-from flask import jsonify
-from flask import send_from_directory
-
-translator = Translator()
 
 # AI modules
 from ai.label_formatter import format_disease_label, extract_crop
@@ -15,18 +9,13 @@ from ai.predictor import predict_disease
 from ai.severity import estimate_severity
 from ai.explanations import explain_disease
 from recommendation.recommender import get_recommendation
-#from ai.explainability import generate_gradcam
-
 from reports.report_generator import generate_report
 
 
 app = Flask(__name__)
 
 UPLOAD_FOLDER = "static/outputs"
-AUDIO_FOLDER = "static/audio"
-
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(AUDIO_FOLDER, exist_ok=True)
 
 model = tf.keras.models.load_model("models/leaf_mobilenet.h5", compile=False)
 
@@ -39,30 +28,8 @@ translations = {
         "prevention": "Prevention",
         "listen": "Listen",
         "stop": "Stop"
-    },
-    "hi": {
-        "chemical": "रासायनिक उपचार",
-        "organic": "जैविक उपचार",
-        "prevention": "रोकथाम",
-        "listen": "सुनें",
-        "stop": "रोकें"
-    },
-    "te": {
-        "chemical": "రసాయన చికిత్స",
-        "organic": "సేంద్రీయ చికిత్స",
-        "prevention": "నివారణ",
-        "listen": "వినండి",
-        "stop": "ఆపండి"
     }
 }
-
-
-# ---------------- AUDIO ----------------
-def generate_audio(text, lang, filename):
-    filepath = os.path.join(AUDIO_FOLDER, filename)
-    tts = gTTS(text=text, lang=lang)
-    tts.save(filepath)
-    return filepath
 
 
 # ---------------- HOME ----------------
@@ -127,31 +94,9 @@ def predict():
                 "Government Agri Centers": "https://www.google.com/maps/search/krishi+vigyan+kendra+near+me"
             }
 
-            gradcam_output_path = os.path.join(
-                "static", "outputs", f"gradcam_{file.filename}"
-            )
-
-#            generate_gradcam(
- #               image_path=image_path,
-  #              model=model,
-   #             output_path=gradcam_output_path
-    #        )
-
-            # ✅ ORIGINAL ENGLISH TEXT (IMPORTANT)
-            full_text_en = (
-                f"Crop: {crop}\n"
-                f"Disease: {clean_disease}\n\n"
-                f"Chemical Treatment: {recommendation['chemical']}\n"
-                f"Organic Treatment: {recommendation['organic']}\n"
-                f"Prevention: {recommendation['prevention']}"
-            )
-
-            audio_en = generate_audio(full_text_en, "en", f"{file.filename}_en.mp3")
-
             latest_results.append({
                 "image": file.filename,
                 "image_path": f"outputs/{file.filename}",
-                "gradcam": f"outputs/gradcam_{file.filename}",
 
                 "crop": crop,
                 "disease": clean_disease,
@@ -159,12 +104,6 @@ def predict():
                 "severity": severity,
                 "urgency": recommendation["urgency"],
 
-                # ✅ ORIGINAL ENGLISH STORED
-                "chemical_en": recommendation["chemical"],
-                "organic_en": recommendation["organic"],
-                "prevention_en": recommendation["prevention"],
-
-                # ✅ DISPLAY (default English)
                 "chemical": recommendation["chemical"],
                 "organic": recommendation["organic"],
                 "prevention": recommendation["prevention"],
@@ -173,65 +112,19 @@ def predict():
                 "amazon_links": amazon_links,
                 "store_links": store_links,
 
-                "explanation": explanation,
-
-                "full_text_en": full_text_en,
-                "audio_en": audio_en
+                "explanation": explanation
             })
 
     if len(latest_results) == 0:
         return "Processing failed ❌"
 
-    language = request.form.get("language", "en")
-    return redirect(url_for("result", lang=language))
-
-# ---------------- TRANSLATE (UPDATED) ----------------
-@app.route("/translate", methods=["POST"])
-def translate_text():
-    data = request.get_json()
-
-    text_data = data.get("text")  # dict
-    lang = data.get("lang")
-
-    translated = {}
-    for key, value in text_data.items():
-        translated[key] = translator.translate(value, dest=lang).text
-
-    return jsonify(translated)
-
-
-# ---------------- AUDIO (UPDATED) ----------------
-@app.route("/get_audio/<filename>")
-def get_audio(filename):
-    return send_from_directory(AUDIO_FOLDER, filename)
-
-@app.route("/audio", methods=["POST"])
-def audio():
-    data = request.get_json()
-    text = data.get("text")
-    lang = data.get("lang", "en")
-
-    text = text[:3000]
-
-    filename = f"audio_{lang}_{abs(hash(text))}.mp3"
-    filepath = os.path.join("static", "audio", filename)
-
-    # ✅ IF FILE EXISTS → SKIP GENERATION (BIG SPEED BOOST)
-    if not os.path.exists(filepath):
-        tts = gTTS(text=text, lang=lang)
-        tts.save(filepath)
-
-    return jsonify({
-        "audio": f"/static/audio/{filename}"
-    })
+    return redirect(url_for("result"))
 
 
 # ---------------- RESULT ----------------
 @app.route("/result")
 def result():
-    language = request.args.get("lang", "en")  # get selected language
-
-    text_labels = translations.get(language, translations["en"])
+    text_labels = translations["en"]
 
     return render_template(
         "result.html",
@@ -242,8 +135,6 @@ def result():
         prevention_heading=text_labels["prevention"],
         listen_text=text_labels["listen"],
         stop_text=text_labels["stop"],
-
-        selected_lang=language  # optional (useful for frontend)
     )
 
 
