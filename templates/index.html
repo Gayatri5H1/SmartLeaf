@@ -11,7 +11,7 @@
 
 <!-- ✅ FIXED Upload Form -->
 <form action="/predict" method="POST" enctype="multipart/form-data">
-    <input type="file" name="file" required>
+    <input type="file" name="images" multiple required>
     <button type="submit">Analyze</button>
 </form>
 
@@ -31,7 +31,7 @@
         <option value="te">Telugu</option>
     </select>
 
-    <!-- 🌿 TREATMENT + PREVENTION -->
+    <!-- 🌿 TREATMENT -->
     <h3>💊 Chemical Treatment</h3>
     <p id="chemical">{{ result.chemical }}</p>
 
@@ -44,11 +44,11 @@
     <!-- 🔊 AUDIO -->
     <button type="button" onclick="playAudio()">🔊 Listen</button>
 
-    <!-- 🔍 Explainable AI -->
+    <!-- 🔍 Grad-CAM -->
     <h3>🔍 Explainable AI (Grad-CAM)</h3>
     <img src="{{ heatmap }}" width="400">
 
-    <!-- Store original English -->
+    <!-- Store English -->
     <script>
         let originalData = {
             chemical: `{{ result.chemical_en }}`,
@@ -61,8 +61,6 @@
 ```
 
 </body>
-
-<!-- 🌐 LANGUAGE SWITCH -->
 
 <script>
 async function changeLanguage(lang) {
@@ -90,8 +88,6 @@ async function changeLanguage(lang) {
     document.getElementById("prevention").innerText = data.prevention;
 }
 </script>
-
-<!-- 🔊 AUDIO -->
 
 <script>
 async function playAudio() {
