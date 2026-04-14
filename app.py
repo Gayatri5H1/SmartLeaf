@@ -59,7 +59,7 @@ def predict():
             try:
                 print("📥 Processing:", file.filename)
 
-                # Save file safely
+                # Save file
                 filename = str(uuid.uuid4()) + "_" + file.filename
                 image_path = os.path.join(UPLOAD_FOLDER, filename)
                 file.save(image_path)
@@ -70,7 +70,6 @@ def predict():
                 model_instance = get_model()
                 disease, confidence = predict_disease(image_path, model_instance)
 
-                # Formatting
                 clean_disease = format_disease_label(disease)
                 crop = extract_crop(disease)
 
@@ -88,7 +87,6 @@ def predict():
                         "prevention": "No data available"
                     }
 
-                # Append results (SAFE ACCESS)
                 latest_results.append({
                     "image": filename,
                     "image_path": f"outputs/{filename}",
@@ -106,10 +104,10 @@ def predict():
 
             except Exception as e:
                 print("❌ IMAGE ERROR:", str(e))
-                continue
+                return f"Image Error: {str(e)}"   # 🔥 IMPORTANT FIX
 
         if not latest_results:
-            return "Processing failed ❌ (Check logs)"
+            return "Processing failed ❌"
 
         print("🚀 Redirecting to result page")
         return redirect(url_for("result"))
