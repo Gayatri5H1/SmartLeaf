@@ -3,17 +3,19 @@ import os
 import uuid
 import tensorflow as tf
 
-# ---------------- INIT ----------------
 app = Flask(__name__)
 
+# ---------------- PATH ----------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "outputs")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ---------------- LOAD MODEL ----------------
+print("🔄 Loading model...")
 model_path = os.path.join(BASE_DIR, "models", "leaf_mobilenet.h5")
 model = tf.keras.models.load_model(model_path, compile=False)
+print("✅ Model loaded")
 
 # ---------------- IMPORT MODULES ----------------
 from ai.label_formatter import format_disease_label, extract_crop
@@ -44,19 +46,16 @@ def predict():
         return "No images uploaded ❌"
 
     for file in files:
-        if file and file.filename != "":
+        try:
+            print("📥 Processing file:", file.filename)
 
-            # UNIQUE FILE NAME
             filename = str(uuid.uuid4()) + "_" + file.filename
             image_path = os.path.join(UPLOAD_FOLDER, filename)
             file.save(image_path)
 
-            try:
-                # PREDICTION
-                disease, confidence = predict_disease(image_path, model)
-            except Exception as e:
-                print("Prediction error:", e)
-                continue
+            print("📁 File saved")
+
+            disease, confidence = predict_disease(image_path, model)
 
             clean_disease = format_disease_label(disease)
             crop = extract_crop(disease)
@@ -78,8 +77,16 @@ def predict():
                 "prevention": recommendation["prevention"]
             })
 
+            print("✅ One image processed")
+
+        except Exception as e:
+            print("❌ ERROR:", str(e))
+            continue
+
     if not latest_results:
-        return "Processing failed ❌"
+        return "Processing failed ❌ (Check logs)"
+
+    print("🚀 Redirecting to result page")
 
     return redirect(url_for("result"))
 
