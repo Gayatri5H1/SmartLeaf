@@ -1,5 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for
 import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+os.environ["OMP_NUM_THREADS"] = "1"
+
+from flask import Flask, render_template, request, redirect, url_for
 import uuid
 import tensorflow as tf
 
@@ -11,11 +14,17 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "outputs")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# ---------------- LOAD MODEL ----------------
-print("🔄 Loading model...")
+# ---------------- MODEL (LAZY LOAD) ----------------
+model = None
 model_path = os.path.join(BASE_DIR, "models", "leaf_mobilenet.h5")
-model = tf.keras.models.load_model(model_path, compile=False)
-print("✅ Model loaded")
+
+def get_model():
+    global model
+    if model is None:
+        print("🔄 Loading model...")
+        model = tf.keras.models.load_model(model_path, compile=False)
+        print("✅ Model loaded")
+    return model
 
 # ---------------- IMPORT MODULES ----------------
 from ai.label_formatter import format_disease_label, extract_crop
@@ -47,14 +56,15 @@ def predict():
 
     for file in files:
         try:
-            print("📥 Processing file:", file.filename)
+            print("📥 Processing:", file.filename)
 
             filename = str(uuid.uuid4()) + "_" + file.filename
             image_path = os.path.join(UPLOAD_FOLDER, filename)
             file.save(image_path)
 
-            print("📁 File saved")
+            print("📁 Saved:", image_path)
 
+            model = get_model()  # ✅ load once safely
             disease, confidence = predict_disease(image_path, model)
 
             clean_disease = format_disease_label(disease)
@@ -77,7 +87,7 @@ def predict():
                 "prevention": recommendation["prevention"]
             })
 
-            print("✅ One image processed")
+            print("✅ Processed successfully")
 
         except Exception as e:
             print("❌ ERROR:", str(e))
@@ -87,7 +97,6 @@ def predict():
         return "Processing failed ❌ (Check logs)"
 
     print("🚀 Redirecting to result page")
-
     return redirect(url_for("result"))
 
 # ---------------- RESULT ----------------
