@@ -5,7 +5,12 @@ import cv2
 # ✅ MODEL WILL BE PASSED FROM app.py
 
 # Load class labels
-with open("models/class_labels.json") as f:
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LABEL_PATH = os.path.join(BASE_DIR, "..", "models", "class_labels.json")
+
+with open(LABEL_PATH) as f:
     class_labels = json.load(f)
 
 
