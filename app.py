@@ -59,6 +59,7 @@ def predict():
 
         for file in files:
             try:
+                # ✅ FIX: correct filename
                 filename = str(uuid.uuid4()) + "_" + file.filename
                 image_path = os.path.join(UPLOAD_FOLDER, filename)
                 file.save(image_path)
@@ -75,26 +76,71 @@ def predict():
                 except:
                     recommendation = {
                         "urgency": "Unknown",
-                        "chemical": "No data",
-                        "organic": "No data",
-                        "prevention": "No data"
+                        "chemical": "No data available",
+                        "organic": "No data available",
+                        "prevention": "No data available"
                     }
+
+                # ✅ SAFE TEXT
+                chemical = recommendation.get("chemical", "")
+                organic = recommendation.get("organic", "")
+                prevention = recommendation.get("prevention", "")
+
+                # ✅ TRANSLATION (safe)
+                try:
+                    chemical_hi = translator.translate(chemical, dest="hi").text
+                    organic_hi = translator.translate(organic, dest="hi").text
+                    prevention_hi = translator.translate(prevention, dest="hi").text
+                except:
+                    chemical_hi = chemical
+                    organic_hi = organic
+                    prevention_hi = prevention
 
                 latest_results.append({
                     "image": filename,
                     "image_path": f"outputs/{filename}",
+
+                    # Prediction tab
                     "crop": crop,
                     "disease": clean_disease,
                     "confidence": round(confidence * 100, 2),
                     "severity": severity,
                     "urgency": recommendation.get("urgency", "Unknown"),
-                    "chemical": recommendation.get("chemical", ""),
-                    "organic": recommendation.get("organic", ""),
-                    "prevention": recommendation.get("prevention", "")
+
+                    # Treatment tab
+                    "chemical_en": chemical,
+                    "organic_en": organic,
+                    "prevention_en": prevention,
+
+                    "chemical_hi": chemical_hi,
+                    "organic_hi": organic_hi,
+                    "prevention_hi": prevention_hi,
+
+                    # Audio
+                    "audio": "",
+
+                    # Actions tab
+                    "amazon_links": [
+                        {
+                            "name": chemical,
+                            "link": f"https://www.amazon.in/s?k={chemical.replace(' ', '+')}"
+                        }
+                    ] if chemical else [],
+
+                    "store_links": {
+                        "Agricultural Supply Stores": "https://www.google.com/maps/search/agriculture+store+near+me",
+                        "Pesticide Shops": "https://www.google.com/maps/search/pesticide+shop+near+me",
+                        "Fertilizer Stores": "https://www.google.com/maps/search/fertilizer+shop+near+me",
+                        "Government Agri Centers": "https://www.google.com/maps/search/agriculture+office+near+me"
+                    }
                 })
 
             except Exception as e:
-                return f"Image Error: {str(e)}"
+                print("❌ Image Error:", str(e))
+                continue
+
+        if not latest_results:
+            return "Processing failed ❌"
 
         return redirect(url_for("result"))
 
@@ -121,20 +167,6 @@ def audio():
             tts.save(filepath)
 
         return jsonify({"audio": "/" + filepath})
-
-    except Exception as e:
-        return jsonify({"error": str(e)})
-
-# ---------------- TRANSLATE ----------------
-@app.route("/translate", methods=["POST"])
-def translate():
-    try:
-        data = request.get_json()
-        text = data.get("text", "")
-        lang = data.get("lang", "hi")
-
-        translated = translator.translate(text, dest=lang).text
-        return jsonify({"translated": translated})
 
     except Exception as e:
         return jsonify({"error": str(e)})
