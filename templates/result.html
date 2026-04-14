@@ -1,34 +1,100 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h1>🌿 Results</h1>
+<h1 class="page-title">🌿 Analysis Results</h1>
 
 {% for r in results %}
-<div>
+<div class="result-card">
 
-    <img src="{{ url_for('static', filename=r.image_path) }}" width="200">
+    <!-- IMAGE -->
+    <img src="{{ url_for('static', filename=r.image_path) }}" class="result-img">
 
-    <p><b>Crop:</b> {{ r.crop }}</p>
-    <p><b>Disease:</b> {{ r.disease }}</p>
-    <p><b>Confidence:</b> {{ r.confidence }}%</p>
-    <p><b>Severity:</b> {{ r.severity }}</p>
+    <!-- HEADER -->
+    <h2>{{ r.image }}</h2>
+    <span class="badge">{{ r.severity }}</span>
 
-    <p><b>Chemical:</b> <span id="chem{{loop.index}}">{{ r.chemical }}</span></p>
-    <p><b>Organic:</b> {{ r.organic }}</p>
-    <p><b>Prevention:</b> {{ r.prevention }}</p>
+    <!-- TABS -->
+    <div class="tabs">
+        <button onclick="showTab({{loop.index}}, 'prediction')">Prediction</button>
+        <button onclick="showTab({{loop.index}}, 'treatment')">Treatment</button>
+        <button onclick="showTab({{loop.index}}, 'actions')">Actions</button>
+    </div>
 
-    <!-- AUDIO -->
-    <button onclick="playAudio('{{ r.disease }} {{ r.chemical }}')">🔊 Listen</button>
+    <!-- ================= PREDICTION ================= -->
+    <div id="prediction{{loop.index}}" class="tab-content">
+        <p><b>Crop:</b> {{ r.crop }}</p>
+        <p><b>Disease:</b> {{ r.disease }}</p>
+        <p><b>Confidence:</b> {{ r.confidence }}%</p>
+        <p><b>Urgency:</b> {{ r.urgency }}</p>
+    </div>
 
-    <!-- TRANSLATE -->
-    <button onclick="translateText('{{ r.chemical }}', 'chem{{loop.index}}')">🌐 Translate</button>
+    <!-- ================= TREATMENT ================= -->
+    <div id="treatment{{loop.index}}" class="tab-content" style="display:none;">
 
-    <hr>
+        <label>Language:</label>
+        <select onchange="changeLang(this.value, {{loop.index}})">
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+        </select>
+
+        <p><b>Chemical:</b> 
+            <span id="chem{{loop.index}}">{{ r.chemical_en }}</span>
+        </p>
+
+        <p><b>Organic:</b> 
+            <span id="org{{loop.index}}">{{ r.organic_en }}</span>
+        </p>
+
+        <p><b>Prevention:</b> 
+            <span id="prev{{loop.index}}">{{ r.prevention_en }}</span>
+        </p>
+
+        <button onclick="playAudio('{{ r.chemical_en }}')">🔊 Listen</button>
+    </div>
+
+    <!-- ================= ACTIONS ================= -->
+    <div id="actions{{loop.index}}" class="tab-content" style="display:none;">
+
+        <h3>🛒 Recommended Products</h3>
+        {% for item in r.amazon_links %}
+            <p>{{ item.name }} → <a href="{{ item.link }}" target="_blank">Buy</a></p>
+        {% endfor %}
+
+        <h3>📍 Nearby Stores</h3>
+        {% for name, link in r.store_links.items() %}
+            <a href="{{ link }}" target="_blank">
+                <button>{{ name }}</button>
+            </a>
+        {% endfor %}
+
+    </div>
 
 </div>
 {% endfor %}
 
+<!-- ================= SCRIPT ================= -->
 <script>
+
+function showTab(index, tab) {
+    document.getElementById("prediction"+index).style.display = "none";
+    document.getElementById("treatment"+index).style.display = "none";
+    document.getElementById("actions"+index).style.display = "none";
+
+    document.getElementById(tab+index).style.display = "block";
+}
+
+function changeLang(lang, index) {
+    if (lang === "hi") {
+        document.getElementById("chem"+index).innerText = "{{ results[0].chemical_hi }}";
+        document.getElementById("org"+index).innerText = "{{ results[0].organic_hi }}";
+        document.getElementById("prev"+index).innerText = "{{ results[0].prevention_hi }}";
+    } else {
+        document.getElementById("chem"+index).innerText = "{{ results[0].chemical_en }}";
+        document.getElementById("org"+index).innerText = "{{ results[0].organic_en }}";
+        document.getElementById("prev"+index).innerText = "{{ results[0].prevention_en }}";
+    }
+}
+
 function playAudio(text) {
     fetch("/audio", {
         method: "POST",
@@ -43,19 +109,6 @@ function playAudio(text) {
     });
 }
 
-function translateText(text, id) {
-    fetch("/translate", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({text, lang: "hi"})
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.translated) {
-            document.getElementById(id).innerText = data.translated;
-        }
-    });
-}
 </script>
 
 {% endblock %}
