@@ -1,21 +1,21 @@
 import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 os.environ["OMP_NUM_THREADS"] = "1"
-from gtts import gTTS
-from flask import jsonify
-from flask import Flask, render_template, request, redirect, url_for
+
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import uuid
 import tensorflow as tf
+from gtts import gTTS
+from googletrans import Translator
 
 app = Flask(__name__)
 
 # ---------------- PATH ----------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "outputs")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# ---------------- MODEL (LAZY LOAD) ----------------
+# ---------------- MODEL ----------------
 model = None
 model_path = os.path.join(BASE_DIR, "models", "leaf_mobilenet.h5")
 
@@ -27,15 +27,16 @@ def get_model():
         print("✅ Model loaded")
     return model
 
-# ---------------- IMPORT MODULES ----------------
+# ---------------- IMPORTS ----------------
 from ai.label_formatter import format_disease_label, extract_crop
 from ai.predictor import predict_disease
 from ai.severity import estimate_severity
 from recommendation.recommender import get_recommendation
 
+translator = Translator()
 latest_results = []
 
-# ---------------- HOME ----------------
+# ---------------- ROUTES ----------------
 @app.route("/")
 def home():
     return render_template("home.html")
@@ -58,34 +59,25 @@ def predict():
 
         for file in files:
             try:
-                print("📥 Processing:", file.filename)
-
-                # Save file
                 filename = str(uuid.uuid4()) + "_" + file.filename
                 image_path = os.path.join(UPLOAD_FOLDER, filename)
                 file.save(image_path)
 
-                print("📁 Saved:", image_path)
-
-                # Prediction
                 model_instance = get_model()
                 disease, confidence = predict_disease(image_path, model_instance)
 
                 clean_disease = format_disease_label(disease)
                 crop = extract_crop(disease)
-
                 severity = "Normal" if disease.lower() == "healthy" else estimate_severity(confidence)
 
-                # Recommendation (SAFE)
                 try:
                     recommendation = get_recommendation(disease, severity)
-                except Exception as e:
-                    print("❌ Recommendation Error:", e)
+                except:
                     recommendation = {
                         "urgency": "Unknown",
-                        "chemical": "No data available",
-                        "organic": "No data available",
-                        "prevention": "No data available"
+                        "chemical": "No data",
+                        "organic": "No data",
+                        "prevention": "No data"
                     }
 
                 latest_results.append({
@@ -96,44 +88,30 @@ def predict():
                     "confidence": round(confidence * 100, 2),
                     "severity": severity,
                     "urgency": recommendation.get("urgency", "Unknown"),
-                    "chemical": recommendation.get("chemical", "No data"),
-                    "organic": recommendation.get("organic", "No data"),
-                    "prevention": recommendation.get("prevention", "No data")
+                    "chemical": recommendation.get("chemical", ""),
+                    "organic": recommendation.get("organic", ""),
+                    "prevention": recommendation.get("prevention", "")
                 })
 
-                print("✅ Processed successfully")
-
             except Exception as e:
-                print("❌ IMAGE ERROR:", str(e))
-                return f"Image Error: {str(e)}"   # 🔥 IMPORTANT FIX
+                return f"Image Error: {str(e)}"
 
-        if not latest_results:
-            return "Processing failed ❌"
-
-        print("🚀 Redirecting to result page")
         return redirect(url_for("result"))
 
     except Exception as e:
-        print("❌ FULL ERROR:", str(e))
         return f"Server Error: {str(e)}"
 
 # ---------------- RESULT ----------------
 @app.route("/result")
 def result():
-    return render_template(
-        "result.html",
-        results=latest_results,
-        chemical_heading="Chemical Treatment",
-        organic_heading="Organic Treatment",
-        prevention_heading="Prevention",
-        listen_text="",
-        stop_text=""
-    )
+    return render_template("result.html", results=latest_results)
+
+# ---------------- AUDIO ----------------
 @app.route("/audio", methods=["POST"])
 def audio():
     try:
         data = request.get_json()
-        text = data.get("text", "")[:500]  # limit size
+        text = data.get("text", "")[:300]
 
         filename = f"audio_{abs(hash(text))}.mp3"
         filepath = os.path.join("static", filename)
@@ -146,6 +124,21 @@ def audio():
 
     except Exception as e:
         return jsonify({"error": str(e)})
+
+# ---------------- TRANSLATE ----------------
+@app.route("/translate", methods=["POST"])
+def translate():
+    try:
+        data = request.get_json()
+        text = data.get("text", "")
+        lang = data.get("lang", "hi")
+
+        translated = translator.translate(text, dest=lang).text
+        return jsonify({"translated": translated})
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
 # ---------------- RUN ----------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
