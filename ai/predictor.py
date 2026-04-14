@@ -53,7 +53,7 @@ def predict_disease(image_path, model):
     if str(index) not in class_labels:
         raise KeyError(f"❌ Class index {index} not found in labels")
 
-    disease_name = class_labels[str(index)]
+    disease_name = class_labels.get(str(index), "Unknown Disease")
 
     print("✅ Prediction done:", disease_name, confidence)
 
