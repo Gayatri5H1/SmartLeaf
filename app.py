@@ -1,7 +1,8 @@
 import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 os.environ["OMP_NUM_THREADS"] = "1"
-
+from gtts import gTTS
+from flask import jsonify
 from flask import Flask, render_template, request, redirect, url_for
 import uuid
 import tensorflow as tf
@@ -128,7 +129,23 @@ def result():
         listen_text="",
         stop_text=""
     )
+@app.route("/audio", methods=["POST"])
+def audio():
+    try:
+        data = request.get_json()
+        text = data.get("text", "")[:500]  # limit size
 
+        filename = f"audio_{abs(hash(text))}.mp3"
+        filepath = os.path.join("static", filename)
+
+        if not os.path.exists(filepath):
+            tts = gTTS(text=text, lang="en")
+            tts.save(filepath)
+
+        return jsonify({"audio": "/" + filepath})
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
 # ---------------- RUN ----------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
