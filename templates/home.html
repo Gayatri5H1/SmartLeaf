@@ -127,11 +127,26 @@ function submitForm() {
         body: formData
     })
     .then(response => {
+        if (!response.ok) {
+            throw new Error("Server error");
+        }
+
         if (response.redirected) {
             window.location.href = response.url;
+        } else {
+            return response.text();
         }
     })
-    .catch(err => console.error(err));
+    .then(data => {
+        if (data) {
+            alert(data); // show backend error
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Error: " + err.message);
+        loader.style.display = "none";
+    });
 }
 </script>
 
