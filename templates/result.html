@@ -1,54 +1,61 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="results-container">
+<h1>🌿 Results</h1>
 
-    <h1>🌿 Analysis Results</h1>
+{% for r in results %}
+<div>
 
-    {% for r in results %}
-    <div class="result-card">
+    <img src="{{ url_for('static', filename=r.image_path) }}" width="200">
 
-        <!-- HEADER -->
-        <div class="header">
-            <h2>{{ r.image }}</h2>
-            <span class="badge {{ r.severity|lower }}">{{ r.severity }}</span>
-        </div>
+    <p><b>Crop:</b> {{ r.crop }}</p>
+    <p><b>Disease:</b> {{ r.disease }}</p>
+    <p><b>Confidence:</b> {{ r.confidence }}%</p>
+    <p><b>Severity:</b> {{ r.severity }}</p>
 
-        <!-- PREDICTION -->
-        <div>
-            <p><strong>Crop:</strong> {{ r.crop }}</p>
-            <p><strong>Disease:</strong> {{ r.disease }}</p>
+    <p><b>Chemical:</b> <span id="chem{{loop.index}}">{{ r.chemical }}</span></p>
+    <p><b>Organic:</b> {{ r.organic }}</p>
+    <p><b>Prevention:</b> {{ r.prevention }}</p>
 
-            <div class="progress">
-                <div class="progress-bar" style="width: {{ r.confidence }}%"></div>
-            </div>
+    <!-- AUDIO -->
+    <button onclick="playAudio('{{ r.disease }} {{ r.chemical }}')">🔊 Listen</button>
 
-            <p>{{ r.confidence }}% Confidence</p>
-            <p><strong>Urgency:</strong> {{ r.urgency }}</p>
-        </div>
+    <!-- TRANSLATE -->
+    <button onclick="translateText('{{ r.chemical }}', 'chem{{loop.index}}')">🌐 Translate</button>
 
-        <!-- TREATMENT -->
-        <div>
-            <h3>Chemical Treatment</h3>
-            <p>{{ r.chemical }}</p>
-
-            <h3>Organic Treatment</h3>
-            <p>{{ r.organic }}</p>
-
-            <h3>Prevention</h3>
-            <p>{{ r.prevention }}</p>
-        </div>
-
-        <!-- IMAGE -->
-        <div>
-            <img src="{{ url_for('static', filename=r.image_path) }}" width="200">
-        </div>
-
-        <hr>
-
-    </div>
-    {% endfor %}
+    <hr>
 
 </div>
+{% endfor %}
+
+<script>
+function playAudio(text) {
+    fetch("/audio", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({text})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.audio) {
+            new Audio(data.audio).play();
+        }
+    });
+}
+
+function translateText(text, id) {
+    fetch("/translate", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({text, lang: "hi"})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.translated) {
+            document.getElementById(id).innerText = data.translated;
+        }
+    });
+}
+</script>
 
 {% endblock %}
