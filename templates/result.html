@@ -1,31 +1,238 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Results</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block content %}
 
-<h1>🌿 Results</h1>
+<div class="results-container">
 
-{% for result in results %}
+    <h1>🌿 Analysis Results</h1>
 
-    <h2>{{ result.disease }}</h2>
-    <p>Confidence: {{ result.confidence }}%</p>
-    <p>Severity: {{ result.severity }}</p>
-    <p>Urgency: {{ result.urgency }}</p>
+    {% for r in results %}
+    <div class="result-card">
 
-    <h3>Chemical</h3>
-    <p>{{ result.chemical }}</p>
+        <!-- HEADER -->
+        <div class="header">
+            <h2>{{ r.image }}</h2>
+            <span class="badge {{ r.severity|lower }}">{{ r.severity }}</span>
+        </div>
 
-    <h3>Organic</h3>
-    <p>{{ result.organic }}</p>
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="openTab(event, 'prediction{{ loop.index }}')">Prediction</button>
+            <button class="tab-btn" onclick="openTab(event, 'treatment{{ loop.index }}')">Treatment</button>
+            <button class="tab-btn" onclick="openTab(event, 'actions{{ loop.index }}')">Actions</button>
+        </div>
 
-    <h3>Prevention</h3>
-    <p>{{ result.prevention }}</p>
+        <!-- PREDICTION -->
+        <div id="prediction{{ loop.index }}" class="tab-content active">
+            <p><strong>Crop:</strong> {{ r.crop }}</p>
+            <p><strong>Disease:</strong> {{ r.disease }}</p>
 
-    <hr>
+            <div class="progress">
+                <div class="progress-bar" style="width: {{ r.confidence }}%"></div>
+            </div>
 
-{% endfor %}
+            <p>{{ r.confidence }}% Confidence</p>
+            <p><strong>Urgency:</strong> {{ r.urgency }}</p>
+        </div>
 
-</body>
-</html>
+        <!-- TREATMENT -->
+        <div id="treatment{{ loop.index }}" class="tab-content">
+
+            <!-- Language Selector -->
+            <div style="margin-bottom:15px;">
+                <label><strong> Language:</strong></label>
+                <select onchange="changeLanguage({{ loop.index }}, this.value)">
+                    <option value="en">English</option>
+                    <option value="hi">Hindi</option>
+                    <option value="te">Telugu</option>
+                </select>
+            </div>
+
+            <!-- CONTENT -->
+            <h3 id="chem_head{{ loop.index }}"> {{ chemical_heading }}</h3>
+            <p id="chemical{{ loop.index }}">{{ r.chemical }}</p>
+
+            <h3 id="org_head{{ loop.index }}"> {{ organic_heading }}</h3>
+            <p id="organic{{ loop.index }}">{{ r.organic }}</p>
+
+            <h3 id="prev_head{{ loop.index }}"> {{ prevention_heading }}</h3>
+            <p id="prevention{{ loop.index }}">{{ r.prevention }}</p>
+
+            <!-- AUDIO -->
+            <button onclick="playAudio({{ loop.index }})">
+                🔊 {{ listen_text }}
+            </button>
+
+            <button onclick="stopAudio()">
+                ⏹ {{ stop_text }}
+            </button>
+
+            <!-- STORE ORIGINAL ENGLISH -->
+            <script>
+                window["originalData{{ loop.index }}"] = {
+                    chemical: `{{ r.chemical_en }}`,
+                    organic: `{{ r.organic_en }}`,
+                    prevention: `{{ r.prevention_en }}`
+                };
+            </script>
+
+        </div>
+
+        <!-- ACTIONS -->
+        <div id="actions{{ loop.index }}" class="tab-content">
+
+    <!-- Download -->
+    <a href="/download_report/{{ loop.index0 }}">
+        <button class="btn-primary">📄 Download Report</button>
+    </a>
+
+    <!-- Amazon Links -->
+    <div class="buy-links">
+        <h4>🛒 Recommended Products:</h4>
+
+        {% if r.amazon_links %}
+            {% for item in r.amazon_links %}
+                <p>
+                    {{ item.name }} →
+                    <a href="{{ item.link }}" target="_blank">Buy</a>
+                </p>
+            {% endfor %}
+        {% else %}
+            <p>✅ No chemical treatment required</p>
+        {% endif %}
+    </div>
+
+    <!-- Store Links -->
+    <div class="store-links">
+        <h4>📍 Nearby Stores:</h4>
+
+        <div class="store-buttons">
+            {% for name, link in r.store_links.items() %}
+                <a href="{{ link }}" target="_blank" class="store-btn">
+                    {{ name }}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+    </div>
+    {% endfor %}
+
+</div>
+
+<!-- TAB SCRIPT -->
+<script>
+function openTab(evt, tabId) {
+    let parent = evt.currentTarget.closest(".result-card");
+
+    parent.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    parent.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+
+    parent.querySelector("#" + tabId).classList.add("active");
+    evt.currentTarget.classList.add("active");
+}
+</script>
+
+<!-- 🔥 MAIN SCRIPT (FIXED) -->
+<script>
+let currentAudio = null;
+
+const headingTranslations = {
+    en: {
+        chemical: "Chemical Treatment",
+        organic: "Organic Treatment",
+        prevention: "Prevention"
+    },
+    hi: {
+        chemical: "रासायनिक उपचार",
+        organic: "जैविक उपचार",
+        prevention: "रोकथाम"
+    },
+    te: {
+        chemical: "రసాయన చికిత్స",
+        organic: "సేంద్రీయ చికిత్స",
+        prevention: "నివారణ"
+    }
+};
+
+async function changeLanguage(index, lang) {
+
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+    }
+
+    let data = window["originalData" + index];
+
+    if (lang === "en") {
+        document.getElementById("chemical" + index).innerText = data.chemical;
+        document.getElementById("organic" + index).innerText = data.organic;
+        document.getElementById("prevention" + index).innerText = data.prevention;
+    } else {
+        let response = await fetch("/translate", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                text: data,
+                lang: lang
+            })
+        });
+
+        let translated = await response.json();
+
+        document.getElementById("chemical" + index).innerText = translated.chemical;
+        document.getElementById("organic" + index).innerText = translated.organic;
+        document.getElementById("prevention" + index).innerText = translated.prevention;
+    }
+
+    let labels = headingTranslations[lang];
+
+    document.getElementById("chem_head" + index).innerText =   labels.chemical;
+    document.getElementById("org_head" + index).innerText =   labels.organic;
+    document.getElementById("prev_head" + index).innerText =   labels.prevention;
+}
+
+// AUDIO
+async function playAudio(index) {
+
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+    }
+
+    let text =
+        document.getElementById("chem_head" + index).innerText + ". " +
+    document.getElementById("chemical" + index).innerText + ". " +
+
+    document.getElementById("org_head" + index).innerText + ". " +
+    document.getElementById("organic" + index).innerText + ". " +
+
+    document.getElementById("prev_head" + index).innerText + ". " +
+    document.getElementById("prevention" + index).innerText;
+
+    let lang = document.querySelector(`#treatment${index} select`).value;
+
+    let response = await fetch("/audio", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            text: text,
+            lang: lang
+        })
+    });
+
+    let data = await response.json();
+
+    currentAudio = new Audio(data.audio);
+    currentAudio.play();
+}
+
+function stopAudio() {
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+    }
+}
+</script>
+
+{% endblock %}
