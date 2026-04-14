@@ -49,55 +49,74 @@ def predict():
     global latest_results
     latest_results = []
 
-    files = request.files.getlist("images")
+    try:
+        files = request.files.getlist("images")
 
-    if not files or files[0].filename == "":
-        return "No images uploaded ❌"
+        if not files or files[0].filename == "":
+            return "No images uploaded ❌"
 
-    for file in files:
-        try:
-            print("📥 Processing:", file.filename)
+        for file in files:
+            try:
+                print("📥 Processing:", file.filename)
 
-            filename = str(uuid.uuid4()) + "_" + file.filename
-            image_path = os.path.join(UPLOAD_FOLDER, filename)
-            file.save(image_path)
+                # Save file safely
+                filename = str(uuid.uuid4()) + "_" + file.filename
+                image_path = os.path.join(UPLOAD_FOLDER, filename)
+                file.save(image_path)
 
-            print("📁 Saved:", image_path)
+                print("📁 Saved:", image_path)
 
-            model = get_model()  # ✅ load once safely
-            disease, confidence = predict_disease(image_path, model)
+                # Prediction
+                model_instance = get_model()
+                disease, confidence = predict_disease(image_path, model_instance)
 
-            clean_disease = format_disease_label(disease)
-            crop = extract_crop(disease)
+                # Formatting
+                clean_disease = format_disease_label(disease)
+                crop = extract_crop(disease)
 
-            severity = "Normal" if disease.lower() == "healthy" else estimate_severity(confidence)
+                severity = "Normal" if disease.lower() == "healthy" else estimate_severity(confidence)
 
-            recommendation = get_recommendation(disease, severity)
+                # Recommendation (SAFE)
+                try:
+                    recommendation = get_recommendation(disease, severity)
+                except Exception as e:
+                    print("❌ Recommendation Error:", e)
+                    recommendation = {
+                        "urgency": "Unknown",
+                        "chemical": "No data available",
+                        "organic": "No data available",
+                        "prevention": "No data available"
+                    }
 
-            latest_results.append({
-                "image": filename,
-                "image_path": f"outputs/{filename}",
-                "crop": crop,
-                "disease": clean_disease,
-                "confidence": round(confidence * 100, 2),
-                "severity": severity,
-                "urgency": recommendation["urgency"],
-                "chemical": recommendation["chemical"],
-                "organic": recommendation["organic"],
-                "prevention": recommendation["prevention"]
-            })
+                # Append results (SAFE ACCESS)
+                latest_results.append({
+                    "image": filename,
+                    "image_path": f"outputs/{filename}",
+                    "crop": crop,
+                    "disease": clean_disease,
+                    "confidence": round(confidence * 100, 2),
+                    "severity": severity,
+                    "urgency": recommendation.get("urgency", "Unknown"),
+                    "chemical": recommendation.get("chemical", "No data"),
+                    "organic": recommendation.get("organic", "No data"),
+                    "prevention": recommendation.get("prevention", "No data")
+                })
 
-            print("✅ Processed successfully")
+                print("✅ Processed successfully")
 
-        except Exception as e:
-            print("❌ ERROR:", str(e))
-            continue
+            except Exception as e:
+                print("❌ IMAGE ERROR:", str(e))
+                continue
 
-    if not latest_results:
-        return "Processing failed ❌ (Check logs)"
+        if not latest_results:
+            return "Processing failed ❌ (Check logs)"
 
-    print("🚀 Redirecting to result page")
-    return redirect(url_for("result"))
+        print("🚀 Redirecting to result page")
+        return redirect(url_for("result"))
+
+    except Exception as e:
+        print("❌ FULL ERROR:", str(e))
+        return f"Server Error: {str(e)}"
 
 # ---------------- RESULT ----------------
 @app.route("/result")
