@@ -126,25 +126,19 @@ function submitForm() {
         method: "POST",
         body: formData
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error("Server error");
-        }
-
+    .then(async (response) => {
         if (response.redirected) {
             window.location.href = response.url;
-        } else {
-            return response.text();
+            return;
         }
-    })
-    .then(data => {
-        if (data) {
-            alert(data); // show backend error
-        }
+
+        // 🔥 THIS LINE IS KEY
+        const text = await response.text();
+        throw new Error(text);
     })
     .catch(err => {
         console.error(err);
-        alert("Error: " + err.message);
+        alert(err.message);   // ✅ NOW YOU SEE REAL ERROR
         loader.style.display = "none";
     });
 }
