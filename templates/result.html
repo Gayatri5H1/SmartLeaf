@@ -6,93 +6,114 @@
 {% for r in results %}
 <div class="result-card">
 
-<h3>{{ r.image }}</h3>
+    <!-- IMAGE NAME -->
+    <h2 class="image-title">{{ r.image }}</h2>
 
-<div class="tabs">
-<button onclick="showTab({{loop.index}},'p')">Prediction</button>
-<button onclick="showTab({{loop.index}},'t')">Treatment</button>
-<button onclick="showTab({{loop.index}},'a')">Actions</button>
+    <!-- TABS -->
+    <div class="tabs">
+        <button onclick="showTab({{loop.index}}, 'p')">Prediction</button>
+        <button onclick="showTab({{loop.index}}, 't')">Treatment</button>
+        <button onclick="showTab({{loop.index}}, 'a')">Actions</button>
+    </div>
+
+    <!-- PREDICTION -->
+    <div id="p{{loop.index}}" class="tab-content active">
+        <p><b>Crop:</b> {{ r.crop }}</p>
+        <p><b>Disease:</b> {{ r.disease }}</p>
+    </div>
+
+    <!-- TREATMENT -->
+    <div id="t{{loop.index}}" class="tab-content">
+        <p id="chem{{loop.index}}">{{ r.chemical }}</p>
+
+        <div class="controls">
+            <select onchange="translateText(this.value, {{loop.index}})">
+                <option value="en">EN</option>
+                <option value="hi">Hindi</option>
+                <option value="te">Telugu</option>
+            </select>
+
+            <button onclick="playAudio('{{ r.chemical }}')">🔊</button>
+            <button onclick="stopAudio()">⏹</button>
+        </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div id="a{{loop.index}}" class="tab-content">
+
+        <div class="actions-box">
+
+            <a href="/download/{{r.index}}">
+                <button class="download-btn">📄 Download Report</button>
+            </a>
+
+            <h3>🛒 Recommended Products:</h3>
+
+            {% for item in r.amazon_links %}
+            <p>{{ item.name }} → 
+                <a href="{{ item.link }}" target="_blank">Buy</a>
+            </p>
+            {% endfor %}
+
+            <h3>📍 Nearby Stores:</h3>
+
+            <div class="store-buttons">
+                <a href="https://www.google.com/maps/search/agriculture+store+near+me" target="_blank">Agricultural Stores</a>
+                <a href="https://www.google.com/maps/search/pesticide+shop+near+me" target="_blank">Pesticide Shops</a>
+                <a href="https://www.google.com/maps/search/fertilizer+shop+near+me" target="_blank">Fertilizer Stores</a>
+                <a href="https://www.google.com/maps/search/agriculture+office+near+me" target="_blank">Govt Centers</a>
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
-
-<div id="p{{loop.index}}" class="tab active">
-<p>{{ r.crop }}</p>
-<p>{{ r.disease }}</p>
-</div>
-
-<div id="t{{loop.index}}" class="tab">
-<p id="chem{{loop.index}}">{{ r.chemical }}</p>
-
-<select onchange="translateText(this.value, {{loop.index}})">
-<option value="en">EN</option>
-<option value="hi">HI</option>
-<option value="te">TE</option>
-</select>
-
-<button onclick="playAudio('{{ r.chemical }}')">🔊</button>
-<button onclick="stopAudio()">⏹</button>
-</div>
-
-<div id="a{{loop.index}}" class="tab">
-
-<a href="/download/{{r.index}}">
-<button>Download Report</button>
-</a>
-
-<h3>Products</h3>
-{% for item in r.amazon_links %}
-<p>{{ item.name }} → <a href="{{ item.link }}" target="_blank">Buy</a></p>
 {% endfor %}
 
-<div class="store-buttons">
-<a target="_blank" href="https://www.google.com/maps/search/agriculture+store+near+me">Agri Stores</a>
-<a target="_blank" href="https://www.google.com/maps/search/pesticide+shop+near+me">Pesticide</a>
-<a target="_blank" href="https://www.google.com/maps/search/fertilizer+shop+near+me">Fertilizer</a>
 </div>
 
-</div>
-
-</div>
-{% endfor %}
-
-</div>
-
+<!-- JS -->
 <script>
-function showTab(i,t){
-["p","t","a"].forEach(x=>{
-document.getElementById(x+i).style.display="none";
-});
-document.getElementById(t+i).style.display="block";
+function showTab(i, tab){
+    ["p","t","a"].forEach(t=>{
+        document.getElementById(t+i).style.display="none";
+    });
+    document.getElementById(tab+i).style.display="block";
 }
 
-function translateText(lang,i){
-let el=document.getElementById("chem"+i);
+function translateText(lang, i){
+    let el = document.getElementById("chem"+i);
 
-fetch("/translate",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({text:el.innerText,lang:lang})
-})
-.then(r=>r.json())
-.then(d=>el.innerText=d.translated);
+    fetch("/translate",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({text:el.innerText, lang:lang})
+    })
+    .then(res=>res.json())
+    .then(data=>el.innerText=data.translated);
 }
 
 let player;
 
 function playAudio(text){
-fetch("/audio",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({text})
-})
-.then(r=>r.json())
-.then(d=>{
-player=new Audio(d.audio);
-player.play();
-});
+    fetch("/audio",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({text})
+    })
+    .then(res=>res.json())
+    .then(data=>{
+        player = new Audio(data.audio);
+        player.play();
+    });
 }
 
 function stopAudio(){
-if(player){player.pause();}
+    if(player){
+        player.pause();
+        player.currentTime = 0;
+    }
 }
 </script>
 
