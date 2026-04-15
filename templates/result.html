@@ -3,138 +3,236 @@
 
 <div class="results-container">
 
-{% for r in results %}
-<div class="result-card">
+    <h1>🌿 Analysis Results</h1>
 
-    <!-- IMAGE NAME -->
-    <h2 class="image-title">{{ r.image }}</h2>
+    {% for r in results %}
+    <div class="result-card">
 
-    <!-- TABS -->
-    <div class="tabs">
-        <button class="tab-btn active" onclick="showTab({{loop.index}}, 'p', this)">Prediction</button>
-        <button class="tab-btn" onclick="showTab({{loop.index}}, 't', this)">Treatment</button>
-        <button class="tab-btn" onclick="showTab({{loop.index}}, 'a', this)">Actions</button>
-    </div>
-
-    <!-- ================= PREDICTION ================= -->
-    <div id="p{{loop.index}}" class="tab-content active">
-        <div class="info-box">
-            <p><b>Crop:</b> {{ r.crop }}</p>
-            <p><b>Disease:</b> {{ r.disease }}</p>
+        <!-- HEADER -->
+        <div class="header">
+            <h2>{{ r.image }}</h2>
+            <span class="badge {{ r.severity|lower }}">{{ r.severity }}</span>
         </div>
-    </div>
 
-    <!-- ================= TREATMENT ================= -->
-    <div id="t{{loop.index}}" class="tab-content">
-        <div class="info-box">
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="openTab(event, 'prediction{{ loop.index }}')">Prediction</button>
+            <button class="tab-btn" onclick="openTab(event, 'treatment{{ loop.index }}')">Treatment</button>
+            <button class="tab-btn" onclick="openTab(event, 'actions{{ loop.index }}')">Actions</button>
+        </div>
 
-            <p id="chem{{loop.index}}">
-                {{ r.chemical }}
-            </p>
+        <!-- PREDICTION -->
+        <div id="prediction{{ loop.index }}" class="tab-content active">
+            <p><strong>Crop:</strong> {{ r.crop }}</p>
+            <p><strong>Disease:</strong> {{ r.disease }}</p>
 
-            <div class="controls">
-                <select onchange="translateText(this.value, {{loop.index}})">
-                    <option value="en">EN</option>
+            <div class="progress">
+                <div class="progress-bar" style="width: {{ r.confidence }}%"></div>
+            </div>
+
+            <p>{{ r.confidence }}% Confidence</p>
+            <p><strong>Urgency:</strong> {{ r.urgency }}</p>
+        </div>
+
+        <!-- TREATMENT -->
+        <div id="treatment{{ loop.index }}" class="tab-content">
+
+            <!-- Language Selector -->
+            <div style="margin-bottom:15px;">
+                <label><strong> Language:</strong></label>
+                <select onchange="changeLanguage({{ loop.index }}, this.value)">
+                    <option value="en">English</option>
                     <option value="hi">Hindi</option>
                     <option value="te">Telugu</option>
                 </select>
-
-                <button class="audio-btn" onclick="playAudio('{{ r.chemical }}')">🔊</button>
-                <button class="audio-btn" onclick="stopAudio()">⏹</button>
             </div>
 
+            <!-- CONTENT -->
+            <h3 id="chem_head{{ loop.index }}"> {{ chemical_heading }}</h3>
+            <p id="chemical{{ loop.index }}">{{ r.chemical }}</p>
+
+            <h3 id="org_head{{ loop.index }}"> {{ organic_heading }}</h3>
+            <p id="organic{{ loop.index }}">{{ r.organic }}</p>
+
+            <h3 id="prev_head{{ loop.index }}"> {{ prevention_heading }}</h3>
+            <p id="prevention{{ loop.index }}">{{ r.prevention }}</p>
+
+            <!-- AUDIO -->
+            <button onclick="playAudio({{ loop.index }})">
+                🔊 {{ listen_text }}
+            </button>
+
+            <button onclick="stopAudio()">
+                ⏹ {{ stop_text }}
+            </button>
+
+            <!-- STORE ORIGINAL ENGLISH -->
+            <script>
+                window["originalData{{ loop.index }}"] = {
+                    chemical: `{{ r.chemical_en }}`,
+                    organic: `{{ r.organic_en }}`,
+                    prevention: `{{ r.prevention_en }}`
+                };
+            </script>
+
         </div>
-    </div>
 
-    <!-- ================= ACTIONS ================= -->
-    <div id="a{{loop.index}}" class="tab-content">
+        <!-- ACTIONS -->
+        <div id="actions{{ loop.index }}" class="tab-content">
 
-        <div class="actions-box">
+    <!-- Download -->
+    <a href="/download_report/{{ loop.index0 }}">
+        <button class="btn-primary">📄 Download Report</button>
+    </a>
 
-            <a href="/download/{{loop.index}}">
-                <button class="download-btn">📄 Download Report</button>
-            </a>
+    <!-- Amazon Links -->
+    <div class="buy-links">
+        <h4>🛒 Recommended Products:</h4>
 
-            <h3>🛒 Recommended Products:</h3>
-
+        {% if r.amazon_links %}
             {% for item in r.amazon_links %}
-            <p>{{ item.name }} → 
-                <a href="{{ item.link }}" target="_blank">Buy</a>
-            </p>
+                <p>
+                    {{ item.name }} →
+                    <a href="{{ item.link }}" target="_blank">Buy</a>
+                </p>
             {% endfor %}
+        {% else %}
+            <p>✅ No chemical treatment required</p>
+        {% endif %}
+    </div>
 
-            <h3>📍 Nearby Stores:</h3>
+    <!-- Store Links -->
+    <div class="store-links">
+        <h4>📍 Nearby Stores:</h4>
 
-            <div class="store-buttons">
-                <a href="https://www.google.com/maps/search/agriculture+store+near+me" target="_blank">Agricultural Stores</a>
-                <a href="https://www.google.com/maps/search/pesticide+shop+near+me" target="_blank">Pesticide Shops</a>
-                <a href="https://www.google.com/maps/search/fertilizer+shop+near+me" target="_blank">Fertilizer Stores</a>
-                <a href="https://www.google.com/maps/search/agriculture+office+near+me" target="_blank">Government Agri Centers</a>
-            </div>
-
+        <div class="store-buttons">
+            {% for name, link in r.store_links.items() %}
+                <a href="{{ link }}" target="_blank" class="store-btn">
+                    {{ name }}
+                </a>
+            {% endfor %}
         </div>
-
     </div>
 
 </div>
-{% endfor %}
+    </div>
+    {% endfor %}
 
 </div>
 
-<!-- ================= JS ================= -->
+<!-- TAB SCRIPT -->
 <script>
+function openTab(evt, tabId) {
+    let parent = evt.currentTarget.closest(".result-card");
 
-function showTab(i, tab, btn){
+    parent.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    parent.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
 
-    ["p","t","a"].forEach(t=>{
-        document.getElementById(t+i).style.display="none";
-    });
+    parent.querySelector("#" + tabId).classList.add("active");
+    evt.currentTarget.classList.add("active");
+}
+</script>
 
-    document.getElementById(tab+i).style.display="block";
+<!-- 🔥 MAIN SCRIPT (FIXED) -->
+<script>
+let currentAudio = null;
 
-    let buttons = btn.parentElement.querySelectorAll("button");
-    buttons.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
+const headingTranslations = {
+    en: {
+        chemical: "Chemical Treatment",
+        organic: "Organic Treatment",
+        prevention: "Prevention"
+    },
+    hi: {
+        chemical: "रासायनिक उपचार",
+        organic: "जैविक उपचार",
+        prevention: "रोकथाम"
+    },
+    te: {
+        chemical: "రసాయన చికిత్స",
+        organic: "సేంద్రీయ చికిత్స",
+        prevention: "నివారణ"
+    }
+};
+
+async function changeLanguage(index, lang) {
+
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+    }
+
+    let data = window["originalData" + index];
+
+    if (lang === "en") {
+        document.getElementById("chemical" + index).innerText = data.chemical;
+        document.getElementById("organic" + index).innerText = data.organic;
+        document.getElementById("prevention" + index).innerText = data.prevention;
+    } else {
+        let response = await fetch("/translate", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                text: data,
+                lang: lang
+            })
+        });
+
+        let translated = await response.json();
+
+        document.getElementById("chemical" + index).innerText = translated.chemical;
+        document.getElementById("organic" + index).innerText = translated.organic;
+        document.getElementById("prevention" + index).innerText = translated.prevention;
+    }
+
+    let labels = headingTranslations[lang];
+
+    document.getElementById("chem_head" + index).innerText =   labels.chemical;
+    document.getElementById("org_head" + index).innerText =   labels.organic;
+    document.getElementById("prev_head" + index).innerText =   labels.prevention;
 }
 
-function translateText(lang, i){
-    let el = document.getElementById("chem"+i);
+// AUDIO
+async function playAudio(index) {
 
-    fetch("/translate",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({text:el.innerText, lang:lang})
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        if(data.translated){
-            el.innerText = data.translated;
-        }
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+    }
+
+    let text =
+        document.getElementById("chem_head" + index).innerText + ". " +
+    document.getElementById("chemical" + index).innerText + ". " +
+
+    document.getElementById("org_head" + index).innerText + ". " +
+    document.getElementById("organic" + index).innerText + ". " +
+
+    document.getElementById("prev_head" + index).innerText + ". " +
+    document.getElementById("prevention" + index).innerText;
+
+    let lang = document.querySelector(`#treatment${index} select`).value;
+
+    let response = await fetch("/audio", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            text: text,
+            lang: lang
+        })
     });
+
+    let data = await response.json();
+
+    currentAudio = new Audio(data.audio);
+    currentAudio.play();
 }
 
-let player;
-
-function playAudio(text){
-    fetch("/audio",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({text})
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        player = new Audio(data.audio);
-        player.play();
-    });
-}
-
-function stopAudio(){
-    if(player){
-        player.pause();
-        player.currentTime = 0;
+function stopAudio() {
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
     }
 }
-
 </script>
 
 {% endblock %}
