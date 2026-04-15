@@ -96,6 +96,14 @@ def predict():
             for p in products
         ]
 
+        # STORE LINKS
+        store_links = {
+            "Agricultural Stores": "https://www.google.com/maps/search/agriculture+store+near+me",
+            "Pesticide Shops": "https://www.google.com/maps/search/pesticide+shop+near+me",
+            "Fertilizer Stores": "https://www.google.com/maps/search/fertilizer+shop+near+me",
+            "Government Agri Centers": "https://www.google.com/maps/search/government+agriculture+office+near+me"
+        }
+
         latest_results.append({
             "index": index,
             "image": filename,
@@ -105,10 +113,18 @@ def predict():
             "confidence": round(confidence*100,2),
             "severity": severity,
             "urgency": rec.get("urgency",""),
+
             "chemical": chemical,
             "organic": organic,
             "prevention": prevention,
-            "amazon_links": amazon_links
+
+            # ✅ IMPORTANT FIXES
+            "chemical_en": chemical,
+            "organic_en": organic,
+            "prevention_en": prevention,
+
+            "amazon_links": amazon_links,
+            "store_links": store_links
         })
 
     return redirect(url_for("result"))
@@ -116,7 +132,17 @@ def predict():
 # ---------------- RESULT ----------------
 @app.route("/result")
 def result():
-    return render_template("result.html", results=latest_results)
+    return render_template(
+        "result.html",
+        results=latest_results,
+
+        # ✅ REQUIRED VARIABLES
+        chemical_heading="Chemical Treatment",
+        organic_heading="Organic Treatment",
+        prevention_heading="Prevention",
+        listen_text="Listen",
+        stop_text="Stop"
+    )
 
 # ---------------- AUDIO ----------------
 @app.route("/audio", methods=["POST"])
@@ -133,11 +159,17 @@ def audio():
 @app.route("/translate", methods=["POST"])
 def translate():
     data = request.json
-    translated = translator.translate(data["text"], dest=data["lang"]).text
-    return jsonify({"translated": translated})
+
+    text_data = data["text"]  # dict now
+
+    translated = {}
+    for key in text_data:
+        translated[key] = translator.translate(text_data[key], dest=data["lang"]).text
+
+    return jsonify(translated)
 
 # ---------------- DOWNLOAD REPORT ----------------
-@app.route("/download/<int:index>")
+@app.route("/download_report/<int:index>")
 def download(index):
     r = latest_results[index]
 
