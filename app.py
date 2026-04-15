@@ -1,23 +1,16 @@
 import os
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-os.environ["OMP_NUM_THREADS"] = "1"
-
-from flask import Flask, render_template, request, redirect, url_for, jsonify
 import uuid
 import tensorflow as tf
-from gtts import gTTS
-from googletrans import Translator
-import re
+from flask import Flask, render_template, request, redirect, url_for
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 app = Flask(__name__)
 
 # ---------------- PATH ----------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "outputs")
-AUDIO_FOLDER = os.path.join(BASE_DIR, "static", "audio")
-
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(AUDIO_FOLDER, exist_ok=True)
 
 # ---------------- MODEL ----------------
 model = None
@@ -26,7 +19,9 @@ model_path = os.path.join(BASE_DIR, "models", "leaf_mobilenet.h5")
 def get_model():
     global model
     if model is None:
+        print("Loading model...")
         model = tf.keras.models.load_model(model_path, compile=False)
+        print("Model loaded")
     return model
 
 # ---------------- IMPORTS ----------------
@@ -35,30 +30,29 @@ from ai.predictor import predict_disease
 from ai.severity import estimate_severity
 from recommendation.recommender import get_recommendation
 
-translator = Translator()
 latest_results = []
 
-# ---------------- PRODUCT EXTRACTION ----------------
+# ---------------- PRODUCT EXTRACTION (FIXED) ----------------
 def extract_products_from_text(text):
-    parts = re.split(r',| and | or ', text.lower())
+    known_products = [
+        "mancozeb",
+        "chlorothalonil",
+        "azoxystrobin",
+        "copper hydroxide",
+        "copper oxychloride",
+        "neem oil",
+        "bacillus subtilis",
+        "trichoderma"
+    ]
 
-    products = []
-    stopwords = ["apply", "use", "spray", "fungicide", "pesticide", "solution", "mix"]
+    found = []
+    text_lower = text.lower()
 
-    for p in parts:
-        p = p.strip()
+    for product in known_products:
+        if product in text_lower:
+            found.append(product.title())
 
-        # remove stopwords
-        for word in stopwords:
-            p = p.replace(word, "")
-
-        p = p.strip()
-
-        if len(p) > 3:
-            products.append(p.title())
-
-    return list(set(products))
-
+    return found
 
 # ---------------- ROUTES ----------------
 @app.route("/")
@@ -78,71 +72,51 @@ def predict():
     files = request.files.getlist("images")
 
     if not files or files[0].filename == "":
-        return "No images uploaded ❌"
+        return "No images uploaded"
 
-    for index, file in enumerate(files):
-
-        filename = str(uuid.uuid4()) + "_" + file.filename
-        image_path = os.path.join(UPLOAD_FOLDER, filename)
-        file.save(image_path)
-
-        model_instance = get_model()
-        disease, confidence = predict_disease(image_path, model_instance)
-
-        clean_disease = format_disease_label(disease)
-        crop = extract_crop(disease)
-        severity = "Normal" if disease.lower() == "healthy" else estimate_severity(confidence)
-
+    for file in files:
         try:
+            filename = str(uuid.uuid4()) + "_" + file.filename
+            path = os.path.join(UPLOAD_FOLDER, filename)
+            file.save(path)
+
+            model = get_model()
+            disease, confidence = predict_disease(path, model)
+
+            clean_disease = format_disease_label(disease)
+            crop = extract_crop(disease)
+
+            severity = "Normal" if disease.lower() == "healthy" else estimate_severity(confidence)
+
             recommendation = get_recommendation(disease, severity)
-        except:
-            recommendation = {
-                "urgency": "Unknown",
-                "chemical": "No data available",
-                "organic": "No data available",
-                "prevention": "No data available"
-            }
 
-        chemical = recommendation.get("chemical", "")
-        organic = recommendation.get("organic", "")
-        prevention = recommendation.get("prevention", "")
+            # ✅ EXTRACT PRODUCTS CORRECTLY
+            products = extract_products_from_text(recommendation["chemical"])
 
-        # ---------------- PRODUCT EXTRACTION ----------------
-        products = extract_products_from_text(chemical)
+            amazon_links = [
+                {
+                    "name": p,
+                    "link": f"https://www.amazon.in/s?k={p.replace(' ', '+')}"
+                }
+                for p in products
+            ]
 
-        amazon_links = [
-            {
-                "name": p,
-                "link": f"https://www.amazon.in/s?k={p.replace(' ', '+')}"
-            }
-            for p in products
-        ]
+            latest_results.append({
+                "image": filename,
+                "image_path": f"outputs/{filename}",
+                "crop": crop,
+                "disease": clean_disease,
+                "confidence": round(confidence * 100, 2),
+                "severity": severity,
+                "urgency": recommendation["urgency"],
+                "chemical": recommendation["chemical"],
+                "organic": recommendation["organic"],
+                "prevention": recommendation["prevention"],
+                "amazon_links": amazon_links
+            })
 
-        # ---------------- STORE LINKS ----------------
-        store_links = {
-            "Agricultural Stores": "https://www.google.com/maps/search/agriculture+store+near+me",
-            "Pesticide Shops": "https://www.google.com/maps/search/pesticide+shop+near+me",
-            "Fertilizer Stores": "https://www.google.com/maps/search/fertilizer+shop+near+me"
-        }
-
-        latest_results.append({
-            "index": index,
-            "image": filename,
-            "image_path": f"outputs/{filename}",
-
-            "crop": crop,
-            "disease": clean_disease,
-            "confidence": round(confidence * 100, 2),
-            "severity": severity,
-            "urgency": recommendation.get("urgency", "Unknown"),
-
-            "chemical": chemical,
-            "organic": organic,
-            "prevention": prevention,
-
-            "amazon_links": amazon_links,
-            "store_links": store_links
-        })
+        except Exception as e:
+            print("ERROR:", e)
 
     return redirect(url_for("result"))
 
@@ -150,28 +124,6 @@ def predict():
 @app.route("/result")
 def result():
     return render_template("result.html", results=latest_results)
-
-# ---------------- AUDIO ----------------
-@app.route("/audio", methods=["POST"])
-def audio():
-    data = request.get_json()
-    text = data.get("text", "")[:300]
-
-    filename = f"audio_{abs(hash(text))}.mp3"
-    filepath = os.path.join(AUDIO_FOLDER, filename)
-
-    if not os.path.exists(filepath):
-        tts = gTTS(text=text, lang="en")
-        tts.save(filepath)
-
-    return jsonify({"audio": f"/static/audio/{filename}"})
-
-
-# ---------------- REPORT ----------------
-@app.route("/download_report/<int:index>")
-def download_report(index):
-    return "Report feature coming soon 🚀"
-
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
