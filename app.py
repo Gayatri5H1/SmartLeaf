@@ -149,9 +149,19 @@ def result():
 def audio():
     data = request.json
     text = data["text"]
+    lang = data.get("lang", "en")   # ✅ get language from frontend
+
+    # FIX language codes for gTTS
+    if lang == "hi":
+        tts_lang = "hi"
+    elif lang == "te":
+        tts_lang = "te"
+    else:
+        tts_lang = "en"
 
     file_path = os.path.join(AUDIO_FOLDER, "audio.mp3")
-    gTTS(text).save(file_path)
+
+    gTTS(text=text, lang=tts_lang).save(file_path)   # ✅ language applied
 
     return jsonify({"audio": "/static/audio/audio.mp3"})
 
