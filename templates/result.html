@@ -1,112 +1,102 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h1 class="page-title">🌿 Analysis Results</h1>
+<h1>🌿 Analysis Results</h1>
 
 {% for r in results %}
 <div class="result-card">
 
-    <!-- IMAGE -->
-    <img src="{{ url_for('static', filename=r.image_path) }}" class="result-img">
+<img src="{{ url_for('static', filename=r.image_path) }}" width="200">
 
-    <!-- HEADER -->
-    <h2>{{ r.image }}</h2>
-    <span class="badge">{{ r.severity }}</span>
+<h2>{{ r.image }}</h2>
 
-    <!-- TABS -->
-    <div class="tabs">
-        <button onclick="showTab({{loop.index}}, 'prediction')">Prediction</button>
-        <button onclick="showTab({{loop.index}}, 'treatment')">Treatment</button>
-        <button onclick="showTab({{loop.index}}, 'actions')">Actions</button>
-    </div>
+<div class="tabs">
+<button onclick="showTab({{r.index}}, 'prediction')">Prediction</button>
+<button onclick="showTab({{r.index}}, 'treatment')">Treatment</button>
+<button onclick="showTab({{r.index}}, 'actions')">Actions</button>
+</div>
 
-    <!-- ================= PREDICTION ================= -->
-    <div id="prediction{{loop.index}}" class="tab-content">
-        <p><b>Crop:</b> {{ r.crop }}</p>
-        <p><b>Disease:</b> {{ r.disease }}</p>
-        <p><b>Confidence:</b> {{ r.confidence }}%</p>
-        <p><b>Urgency:</b> {{ r.urgency }}</p>
-    </div>
+<div id="prediction{{r.index}}">
+<p><b>Crop:</b> {{ r.crop }}</p>
+<p><b>Disease:</b> {{ r.disease }}</p>
+<p><b>Confidence:</b> {{ r.confidence }}%</p>
+<p><b>Urgency:</b> {{ r.urgency }}</p>
+</div>
 
-    <!-- ================= TREATMENT ================= -->
-    <div id="treatment{{loop.index}}" class="tab-content" style="display:none;">
+<div id="treatment{{r.index}}" style="display:none;">
+<select onchange="changeLang(this.value, {{r.index}})">
+<option value="en">English</option>
+<option value="hi">Hindi</option>
+<option value="te">Telugu</option>
+</select>
 
-        <label>Language:</label>
-        <select onchange="changeLang(this.value, {{loop.index}})">
-            <option value="en">English</option>
-            <option value="hi">Hindi</option>
-        </select>
+<p><b>Chemical:</b> <span id="chem{{r.index}}">{{ r.chemical_en }}</span></p>
+<p><b>Organic:</b> <span id="org{{r.index}}">{{ r.organic_en }}</span></p>
+<p><b>Prevention:</b> <span id="prev{{r.index}}">{{ r.prevention_en }}</span></p>
 
-        <p><b>Chemical:</b> 
-            <span id="chem{{loop.index}}">{{ r.chemical_en }}</span>
-        </p>
+<button onclick="playAudio('{{ r.chemical_en }}')">🔊 Listen</button>
+<button onclick="stopAudio()">⏹ Stop</button>
+</div>
 
-        <p><b>Organic:</b> 
-            <span id="org{{loop.index}}">{{ r.organic_en }}</span>
-        </p>
+<div id="actions{{r.index}}" style="display:none;">
+<h3>Products</h3>
+{% for item in r.amazon_links %}
+<p>{{ item.name }} → <a href="{{ item.link }}" target="_blank">Buy</a></p>
+{% endfor %}
 
-        <p><b>Prevention:</b> 
-            <span id="prev{{loop.index}}">{{ r.prevention_en }}</span>
-        </p>
+<h3>Nearby Stores</h3>
+{% for name, link in r.store_links.items() %}
+<a href="{{ link }}" target="_blank"><button>{{ name }}</button></a>
+{% endfor %}
 
-        <button onclick="playAudio('{{ r.chemical_en }}')">🔊 Listen</button>
-    </div>
+<a href="/download_report/{{r.index}}">
+<button>📄 Download Report</button>
+</a>
+</div>
 
-    <!-- ================= ACTIONS ================= -->
-    <div id="actions{{loop.index}}" class="tab-content" style="display:none;">
-
-        <h3>🛒 Recommended Products</h3>
-        {% for item in r.amazon_links %}
-            <p>{{ item.name }} → <a href="{{ item.link }}" target="_blank">Buy</a></p>
-        {% endfor %}
-
-        <h3>📍 Nearby Stores</h3>
-        {% for name, link in r.store_links.items() %}
-            <a href="{{ link }}" target="_blank">
-                <button>{{ name }}</button>
-            </a>
-        {% endfor %}
-
-    </div>
-
+<hr>
 </div>
 {% endfor %}
 
-<!-- ================= SCRIPT ================= -->
 <script>
 
-function showTab(index, tab) {
-    document.getElementById("prediction"+index).style.display = "none";
-    document.getElementById("treatment"+index).style.display = "none";
-    document.getElementById("actions"+index).style.display = "none";
+let currentAudio = null;
 
-    document.getElementById(tab+index).style.display = "block";
+function playAudio(text){
+fetch("/audio",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})})
+.then(res=>res.json())
+.then(data=>{
+if(data.audio){
+if(currentAudio){currentAudio.pause();}
+currentAudio=new Audio(data.audio);
+currentAudio.play();
+}});
 }
 
-function changeLang(lang, index) {
-    if (lang === "hi") {
-        document.getElementById("chem"+index).innerText = "{{ results[0].chemical_hi }}";
-        document.getElementById("org"+index).innerText = "{{ results[0].organic_hi }}";
-        document.getElementById("prev"+index).innerText = "{{ results[0].prevention_hi }}";
-    } else {
-        document.getElementById("chem"+index).innerText = "{{ results[0].chemical_en }}";
-        document.getElementById("org"+index).innerText = "{{ results[0].organic_en }}";
-        document.getElementById("prev"+index).innerText = "{{ results[0].prevention_en }}";
-    }
+function stopAudio(){
+if(currentAudio){
+currentAudio.pause();
+currentAudio.currentTime=0;
+}
 }
 
-function playAudio(text) {
-    fetch("/audio", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({text})
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.audio) {
-            new Audio(data.audio).play();
-        }
-    });
+function showTab(index,tab){
+document.getElementById("prediction"+index).style.display="none";
+document.getElementById("treatment"+index).style.display="none";
+document.getElementById("actions"+index).style.display="none";
+document.getElementById(tab+index).style.display="block";
+}
+
+function changeLang(lang,index){
+const data={
+en:["{{r.chemical_en}}","{{r.organic_en}}","{{r.prevention_en}}"],
+hi:["{{r.chemical_hi}}","{{r.organic_hi}}","{{r.prevention_hi}}"],
+te:["{{r.chemical_te}}","{{r.organic_te}}","{{r.prevention_te}}"]
+};
+
+document.getElementById("chem"+index).innerText=data[lang][0];
+document.getElementById("org"+index).innerText=data[lang][1];
+document.getElementById("prev"+index).innerText=data[lang][2];
 }
 
 </script>
