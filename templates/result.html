@@ -75,19 +75,19 @@
 
     </div>
 
-    <!-- ================= ACTIONS ================= -->
+    <!-- ================= ACTIONS (FIXED) ================= -->
     <div id="act{{loop.index}}" class="tab-content">
 
-        <div class="actions-box">
+        <div class="actions-clean">
 
-            <!-- DOWNLOAD -->
+            <!-- DOWNLOAD LEFT -->
             <div class="download-section">
                 <a href="/download_report/{{loop.index}}">
                     <button class="download-btn">📄 Download Report</button>
                 </a>
             </div>
 
-            <!-- PRODUCTS -->
+            <!-- PRODUCTS (ONLY NAMES + LINK) -->
             <div class="products-section">
                 <h4>🛒 Recommended Products:</h4>
 
@@ -120,11 +120,10 @@
 
 </div>
 
-<!-- ================= SCRIPT ================= -->
+<!-- SCRIPT -->
 <script>
 let currentAudio = null;
 
-// PLAY AUDIO
 function playAudio(text){
 fetch("/audio",{
 method:"POST",
@@ -140,7 +139,6 @@ currentAudio.play();
 }});
 }
 
-// STOP AUDIO
 function stopAudio(){
 if(currentAudio){
 currentAudio.pause();
@@ -148,7 +146,6 @@ currentAudio.currentTime=0;
 }
 }
 
-// LANGUAGE SWITCH
 function changeLang(lang,index){
 let chem=document.getElementById("chem"+index);
 let org=document.getElementById("org"+index);
@@ -159,7 +156,6 @@ org.innerText=org.getAttribute("data-"+lang);
 prev.innerText=prev.getAttribute("data-"+lang);
 }
 
-// TAB SWITCH
 function openTab(evt, tabId){
 let contents=document.querySelectorAll(".tab-content");
 let buttons=document.querySelectorAll(".tab-btn");
