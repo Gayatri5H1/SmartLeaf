@@ -1,61 +1,82 @@
 {% extends "base.html" %}
 {% block content %}
 
+<div class="results-container">
+
 <h1>🌿 Analysis Results</h1>
 
 {% for r in results %}
 <div class="result-card">
 
-    <div class="top-bar">
-        <h2>{{ r.image }}</h2>
-        <span class="badge">{{ r.severity }}</span>
+    <div class="header">
+        <h3>{{ r.image }}</h3>
+        <span class="badge {{ r.severity|lower }}">{{ r.severity }}</span>
     </div>
 
-    <!-- Tabs -->
+    <!-- TABS -->
     <div class="tabs">
-        <button onclick="showTab('{{loop.index}}','pred')">Prediction</button>
-        <button onclick="showTab('{{loop.index}}','treat')">Treatment</button>
-        <button onclick="showTab('{{loop.index}}','action')">Actions</button>
+        <button class="tab-btn active" onclick="showTab('{{loop.index}}','pred')">Prediction</button>
+        <button class="tab-btn" onclick="showTab('{{loop.index}}','treat')">Treatment</button>
+        <button class="tab-btn" onclick="showTab('{{loop.index}}','action')">Actions</button>
     </div>
 
-    <!-- Prediction -->
-    <div id="pred{{loop.index}}" class="tab active">
+    <!-- PREDICTION -->
+    <div id="pred{{loop.index}}" class="tab-content active">
         <p><b>Crop:</b> {{ r.crop }}</p>
         <p><b>Disease:</b> {{ r.disease }}</p>
-        <p><b>Confidence:</b> {{ r.confidence }}%</p>
+
+        <div class="progress">
+            <div class="progress-bar" style="width: {{ r.confidence }}%"></div>
+        </div>
+
+        <p>{{ r.confidence }}% Confidence</p>
         <p><b>Urgency:</b> {{ r.urgency }}</p>
     </div>
 
-    <!-- Treatment -->
-    <div id="treat{{loop.index}}" class="tab">
-        <p><b>Chemical Treatment:</b> {{ r.chemical }}</p>
-        <p><b>Organic Treatment:</b> {{ r.organic }}</p>
-        <p><b>Prevention:</b> {{ r.prevention }}</p>
+    <!-- TREATMENT -->
+    <div id="treat{{loop.index}}" class="tab-content">
+        <p><b>Chemical Treatment</b></p>
+        <p>{{ r.chemical }}</p>
+
+        <p><b>Organic Treatment</b></p>
+        <p>{{ r.organic }}</p>
+
+        <p><b>Prevention</b></p>
+        <p>{{ r.prevention }}</p>
     </div>
 
-    <!-- Actions -->
-    <div id="action{{loop.index}}" class="tab">
+    <!-- ACTIONS -->
+    <div id="action{{loop.index}}" class="tab-content">
 
-        <button class="download-btn">📄 Download Report</button>
+        <div class="actions">
 
-        <h3>🛒 Recommended Products:</h3>
+            <!-- DOWNLOAD -->
+            <div class="download-section">
+                <button class="download-btn">📄 Download Report</button>
+            </div>
 
-        {% if r.amazon_links %}
-            {% for item in r.amazon_links %}
-                <p>{{ item.name }} → 
-                <a href="{{ item.link }}" target="_blank">Buy</a></p>
-            {% endfor %}
-        {% else %}
-            <p>No products found</p>
-        {% endif %}
+            <!-- PRODUCTS -->
+            <div class="buy-links">
+                <h3>🛒 Recommended Products:</h3>
 
-        <h3>📍 Nearby Stores:</h3>
+                {% for item in r.amazon_links %}
+                    <p>{{ item.name }} → 
+                    <a href="{{ item.link }}" target="_blank">Buy</a></p>
+                {% endfor %}
+            </div>
 
-        <div class="store-buttons">
-            <button>Agricultural Stores</button>
-            <button>Pesticide Shops</button>
-            <button>Fertilizer Stores</button>
-            <button>Government Agri Centers</button>
+            <!-- STORES -->
+            <div class="store-links">
+                <h3>📍 Nearby Stores:</h3>
+
+                <div class="store-buttons">
+                    <a href="#" class="store-btn">Agricultural Stores</a>
+                    <a href="#" class="store-btn">Pesticide Shops</a>
+                    <a href="#" class="store-btn">Fertilizer Stores</a>
+                    <a href="#" class="store-btn">Government Agri Centers</a>
+                </div>
+            </div>
+
         </div>
 
     </div>
@@ -63,12 +84,18 @@
 </div>
 {% endfor %}
 
+</div>
+
 <script>
 function showTab(i, tab) {
-    document.querySelectorAll(`#pred${i},#treat${i},#action${i}`)
-        .forEach(el => el.style.display = "none");
 
-    document.getElementById(tab + i).style.display = "block";
+    document.querySelectorAll(`#pred${i},#treat${i},#action${i}`)
+        .forEach(el => el.classList.remove("active"));
+
+    document.getElementById(tab + i).classList.add("active");
+
+    document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+    event.target.classList.add("active");
 }
 </script>
 
