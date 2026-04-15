@@ -1,116 +1,61 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="results-container">
-
 <h1>🌿 Analysis Results</h1>
 
 {% for r in results %}
 <div class="result-card">
 
-    <!-- HEADER -->
-    <div class="header">
+    <div class="top-bar">
         <h2>{{ r.image }}</h2>
-        <span class="badge {{ r.severity|lower }}">{{ r.severity }}</span>
+        <span class="badge">{{ r.severity }}</span>
     </div>
 
-    <!-- TABS -->
+    <!-- Tabs -->
     <div class="tabs">
-        <button class="tab-btn active" onclick="openTab(event, 'pred{{loop.index}}')">Prediction</button>
-        <button class="tab-btn" onclick="openTab(event, 'treat{{loop.index}}')">Treatment</button>
-        <button class="tab-btn" onclick="openTab(event, 'act{{loop.index}}')">Actions</button>
+        <button onclick="showTab('{{loop.index}}','pred')">Prediction</button>
+        <button onclick="showTab('{{loop.index}}','treat')">Treatment</button>
+        <button onclick="showTab('{{loop.index}}','action')">Actions</button>
     </div>
 
-    <!-- ================= PREDICTION ================= -->
-    <div id="pred{{loop.index}}" class="tab-content active">
+    <!-- Prediction -->
+    <div id="pred{{loop.index}}" class="tab active">
         <p><b>Crop:</b> {{ r.crop }}</p>
         <p><b>Disease:</b> {{ r.disease }}</p>
-
-        <div class="progress">
-            <div class="progress-bar" style="width: {{ r.confidence }}%;"></div>
-        </div>
-
-        <p>{{ r.confidence }}% Confidence</p>
+        <p><b>Confidence:</b> {{ r.confidence }}%</p>
         <p><b>Urgency:</b> {{ r.urgency }}</p>
     </div>
 
-    <!-- ================= TREATMENT ================= -->
-    <div id="treat{{loop.index}}" class="tab-content">
-
-        <label><b>Language:</b></label>
-        <select onchange="changeLang(this.value, {{loop.index}})">
-            <option value="en">English</option>
-            <option value="hi">Hindi</option>
-            <option value="te">Telugu</option>
-        </select>
-
-        <h4>Chemical Treatment</h4>
-        <p id="chem{{loop.index}}"
-           data-en="{{ r.chemical_en }}"
-           data-hi="{{ r.chemical_hi }}"
-           data-te="{{ r.chemical_te }}">
-           {{ r.chemical_en }}
-        </p>
-
-        <h4>Organic Treatment</h4>
-        <p id="org{{loop.index}}"
-           data-en="{{ r.organic_en }}"
-           data-hi="{{ r.organic_hi }}"
-           data-te="{{ r.organic_te }}">
-           {{ r.organic_en }}
-        </p>
-
-        <h4>Prevention</h4>
-        <p id="prev{{loop.index}}"
-           data-en="{{ r.prevention_en }}"
-           data-hi="{{ r.prevention_hi }}"
-           data-te="{{ r.prevention_te }}">
-           {{ r.prevention_en }}
-        </p>
-
-        <div class="voice-section">
-            <button onclick="playAudio('{{ r.chemical_en }}')">🔊 Listen</button>
-            <button onclick="stopAudio()">⏹ Stop</button>
-        </div>
-
+    <!-- Treatment -->
+    <div id="treat{{loop.index}}" class="tab">
+        <p><b>Chemical Treatment:</b> {{ r.chemical }}</p>
+        <p><b>Organic Treatment:</b> {{ r.organic }}</p>
+        <p><b>Prevention:</b> {{ r.prevention }}</p>
     </div>
 
-    <!-- ================= ACTIONS (FIXED) ================= -->
-    <div id="act{{loop.index}}" class="tab-content">
+    <!-- Actions -->
+    <div id="action{{loop.index}}" class="tab">
 
-        <div class="actions-clean">
+        <button class="download-btn">📄 Download Report</button>
 
-            <!-- DOWNLOAD LEFT -->
-            <div class="download-section">
-                <a href="/download_report/{{loop.index}}">
-                    <button class="download-btn">📄 Download Report</button>
-                </a>
-            </div>
+        <h3>🛒 Recommended Products:</h3>
 
-            <!-- PRODUCTS (ONLY NAMES + LINK) -->
-            <div class="products-section">
-                <h4>🛒 Recommended Products:</h4>
+        {% if r.amazon_links %}
+            {% for item in r.amazon_links %}
+                <p>{{ item.name }} → 
+                <a href="{{ item.link }}" target="_blank">Buy</a></p>
+            {% endfor %}
+        {% else %}
+            <p>No products found</p>
+        {% endif %}
 
-                {% for item in r.amazon_links %}
-                    <p>{{ item.name }} → 
-                       <a href="{{ item.link }}" target="_blank">Buy</a>
-                    </p>
-                {% endfor %}
-            </div>
+        <h3>📍 Nearby Stores:</h3>
 
-            <!-- STORES -->
-            <div class="store-section">
-                <h4>📍 Nearby Stores:</h4>
-
-                <div class="store-buttons">
-                    {% for name, link in r.store_links.items() %}
-                        <a href="{{ link }}" target="_blank" class="store-btn">
-                            {{ name }}
-                        </a>
-                    {% endfor %}
-                </div>
-            </div>
-
+        <div class="store-buttons">
+            <button>Agricultural Stores</button>
+            <button>Pesticide Shops</button>
+            <button>Fertilizer Stores</button>
+            <button>Government Agri Centers</button>
         </div>
 
     </div>
@@ -118,53 +63,12 @@
 </div>
 {% endfor %}
 
-</div>
-
-<!-- SCRIPT -->
 <script>
-let currentAudio = null;
+function showTab(i, tab) {
+    document.querySelectorAll(`#pred${i},#treat${i},#action${i}`)
+        .forEach(el => el.style.display = "none");
 
-function playAudio(text){
-fetch("/audio",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({text})
-})
-.then(res=>res.json())
-.then(data=>{
-if(data.audio){
-if(currentAudio){currentAudio.pause();}
-currentAudio=new Audio(data.audio);
-currentAudio.play();
-}});
-}
-
-function stopAudio(){
-if(currentAudio){
-currentAudio.pause();
-currentAudio.currentTime=0;
-}
-}
-
-function changeLang(lang,index){
-let chem=document.getElementById("chem"+index);
-let org=document.getElementById("org"+index);
-let prev=document.getElementById("prev"+index);
-
-chem.innerText=chem.getAttribute("data-"+lang);
-org.innerText=org.getAttribute("data-"+lang);
-prev.innerText=prev.getAttribute("data-"+lang);
-}
-
-function openTab(evt, tabId){
-let contents=document.querySelectorAll(".tab-content");
-let buttons=document.querySelectorAll(".tab-btn");
-
-contents.forEach(c=>c.classList.remove("active"));
-buttons.forEach(b=>b.classList.remove("active"));
-
-document.getElementById(tabId).classList.add("active");
-evt.currentTarget.classList.add("active");
+    document.getElementById(tab + i).style.display = "block";
 }
 </script>
 
