@@ -21,7 +21,7 @@
         <button class="tab-btn" onclick="openTab(event, 'act{{loop.index}}')">Actions</button>
     </div>
 
-    <!-- PREDICTION -->
+    <!-- ================= PREDICTION ================= -->
     <div id="pred{{loop.index}}" class="tab-content active">
         <p><b>Crop:</b> {{ r.crop }}</p>
         <p><b>Disease:</b> {{ r.disease }}</p>
@@ -34,7 +34,7 @@
         <p><b>Urgency:</b> {{ r.urgency }}</p>
     </div>
 
-    <!-- TREATMENT -->
+    <!-- ================= TREATMENT ================= -->
     <div id="treat{{loop.index}}" class="tab-content">
 
         <label><b>Language:</b></label>
@@ -75,32 +75,38 @@
 
     </div>
 
-    <!-- ACTIONS -->
+    <!-- ================= ACTIONS ================= -->
     <div id="act{{loop.index}}" class="tab-content">
 
-        <div class="actions">
+        <div class="actions-box">
 
             <!-- DOWNLOAD -->
             <div class="download-section">
                 <a href="/download_report/{{loop.index}}">
-                    <button>📄 Download Report</button>
+                    <button class="download-btn">📄 Download Report</button>
                 </a>
             </div>
 
             <!-- PRODUCTS -->
-            <div class="buy-links">
-                <h4>🛒 Recommended Products</h4>
+            <div class="products-section">
+                <h4>🛒 Recommended Products:</h4>
+
                 {% for item in r.amazon_links %}
-                    <p>{{ item.name }} → <a href="{{ item.link }}" target="_blank">Buy</a></p>
+                    <p>{{ item.name }} → 
+                       <a href="{{ item.link }}" target="_blank">Buy</a>
+                    </p>
                 {% endfor %}
             </div>
 
             <!-- STORES -->
-            <div class="store-links">
-                <h4>📍 Nearby Stores</h4>
+            <div class="store-section">
+                <h4>📍 Nearby Stores:</h4>
+
                 <div class="store-buttons">
                     {% for name, link in r.store_links.items() %}
-                        <a href="{{ link }}" target="_blank" class="store-btn">{{ name }}</a>
+                        <a href="{{ link }}" target="_blank" class="store-btn">
+                            {{ name }}
+                        </a>
                     {% endfor %}
                 </div>
             </div>
@@ -114,10 +120,11 @@
 
 </div>
 
-<!-- SCRIPT -->
+<!-- ================= SCRIPT ================= -->
 <script>
 let currentAudio = null;
 
+// PLAY AUDIO
 function playAudio(text){
 fetch("/audio",{
 method:"POST",
@@ -133,6 +140,7 @@ currentAudio.play();
 }});
 }
 
+// STOP AUDIO
 function stopAudio(){
 if(currentAudio){
 currentAudio.pause();
@@ -140,6 +148,7 @@ currentAudio.currentTime=0;
 }
 }
 
+// LANGUAGE SWITCH
 function changeLang(lang,index){
 let chem=document.getElementById("chem"+index);
 let org=document.getElementById("org"+index);
@@ -150,6 +159,7 @@ org.innerText=org.getAttribute("data-"+lang);
 prev.innerText=prev.getAttribute("data-"+lang);
 }
 
+// TAB SWITCH
 function openTab(evt, tabId){
 let contents=document.querySelectorAll(".tab-content");
 let buttons=document.querySelectorAll(".tab-btn");
