@@ -16,6 +16,7 @@
 <button onclick="showTab({{r.index}}, 'actions')">Actions</button>
 </div>
 
+<!-- PREDICTION -->
 <div id="prediction{{r.index}}">
 <p><b>Crop:</b> {{ r.crop }}</p>
 <p><b>Disease:</b> {{ r.disease }}</p>
@@ -23,22 +24,47 @@
 <p><b>Urgency:</b> {{ r.urgency }}</p>
 </div>
 
+<!-- TREATMENT -->
 <div id="treatment{{r.index}}" style="display:none;">
+
 <select onchange="changeLang(this.value, {{r.index}})">
 <option value="en">English</option>
 <option value="hi">Hindi</option>
 <option value="te">Telugu</option>
 </select>
 
-<p><b>Chemical:</b> <span id="chem{{r.index}}">{{ r.chemical_en }}</span></p>
-<p><b>Organic:</b> <span id="org{{r.index}}">{{ r.organic_en }}</span></p>
-<p><b>Prevention:</b> <span id="prev{{r.index}}">{{ r.prevention_en }}</span></p>
+<p><b>Chemical:</b> 
+<span id="chem{{r.index}}"
+data-en="{{ r.chemical_en }}"
+data-hi="{{ r.chemical_hi }}"
+data-te="{{ r.chemical_te }}">
+{{ r.chemical_en }}
+</span></p>
+
+<p><b>Organic:</b> 
+<span id="org{{r.index}}"
+data-en="{{ r.organic_en }}"
+data-hi="{{ r.organic_hi }}"
+data-te="{{ r.organic_te }}">
+{{ r.organic_en }}
+</span></p>
+
+<p><b>Prevention:</b> 
+<span id="prev{{r.index}}"
+data-en="{{ r.prevention_en }}"
+data-hi="{{ r.prevention_hi }}"
+data-te="{{ r.prevention_te }}">
+{{ r.prevention_en }}
+</span></p>
 
 <button onclick="playAudio('{{ r.chemical_en }}')">🔊 Listen</button>
 <button onclick="stopAudio()">⏹ Stop</button>
+
 </div>
 
+<!-- ACTIONS -->
 <div id="actions{{r.index}}" style="display:none;">
+
 <h3>Products</h3>
 {% for item in r.amazon_links %}
 <p>{{ item.name }} → <a href="{{ item.link }}" target="_blank">Buy</a></p>
@@ -46,12 +72,15 @@
 
 <h3>Nearby Stores</h3>
 {% for name, link in r.store_links.items() %}
-<a href="{{ link }}" target="_blank"><button>{{ name }}</button></a>
+<a href="{{ link }}" target="_blank">
+<button>{{ name }}</button>
+</a>
 {% endfor %}
 
 <a href="/download_report/{{r.index}}">
 <button>📄 Download Report</button>
 </a>
+
 </div>
 
 <hr>
@@ -63,7 +92,11 @@
 let currentAudio = null;
 
 function playAudio(text){
-fetch("/audio",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})})
+fetch("/audio",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({text})
+})
 .then(res=>res.json())
 .then(data=>{
 if(data.audio){
@@ -88,15 +121,15 @@ document.getElementById(tab+index).style.display="block";
 }
 
 function changeLang(lang,index){
-const data={
-en:["{{r.chemical_en}}","{{r.organic_en}}","{{r.prevention_en}}"],
-hi:["{{r.chemical_hi}}","{{r.organic_hi}}","{{r.prevention_hi}}"],
-te:["{{r.chemical_te}}","{{r.organic_te}}","{{r.prevention_te}}"]
-};
 
-document.getElementById("chem"+index).innerText=data[lang][0];
-document.getElementById("org"+index).innerText=data[lang][1];
-document.getElementById("prev"+index).innerText=data[lang][2];
+let chem = document.getElementById("chem"+index);
+let org = document.getElementById("org"+index);
+let prev = document.getElementById("prev"+index);
+
+chem.innerText = chem.getAttribute("data-"+lang);
+org.innerText = org.getAttribute("data-"+lang);
+prev.innerText = prev.getAttribute("data-"+lang);
+
 }
 
 </script>
