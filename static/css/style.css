@@ -296,3 +296,84 @@ a:hover {
 a:visited {
     color: #00e6ff;
 }
+
+.results-container {
+    padding: 40px;
+}
+
+.result-card {
+    background: linear-gradient(135deg, #1f3c6d, #2c4a8a);
+    padding: 25px;
+    margin-bottom: 30px;
+    border-radius: 15px;
+    color: white;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+.image-title {
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+.tabs {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.tabs button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #4CAF50, #6fa8dc);
+    color: white;
+    cursor: pointer;
+}
+
+.tab-content {
+    display: none;
+    background: #f1f1f1;
+    color: black;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.controls {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.actions-box {
+    background: #f1f1f1;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.download-btn {
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    background: linear-gradient(90deg, #4CAF50, #6fa8dc);
+    color: white;
+    border: none;
+    border-radius: 8px;
+}
+
+.store-buttons {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.store-buttons a {
+    padding: 8px 15px;
+    background: #28a745;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+}
