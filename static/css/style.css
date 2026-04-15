@@ -1,4 +1,4 @@
-/* BASE */
+/* ================= BASE ================= */
 body {
     margin: 0;
     font-family: 'Poppins', sans-serif;
@@ -15,7 +15,111 @@ body {
     100% { background-position: 0% 50%; }
 }
 
-/* RESULTS PAGE */
+/* ================= HERO ================= */
+.hero {
+    text-align: center;
+    margin-top: 80px;
+}
+
+.hero h1 {
+    font-size: 48px;
+    font-weight: 600;
+    background: linear-gradient(to right, #22c55e, #60a5fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero p {
+    color: #cbd5f5;
+}
+
+/* ================= UPLOAD CARD ================= */
+.card {
+    background: rgba(255,255,255,0.08);
+    padding: 40px 30px;
+    border-radius: 20px;
+    width: 420px;
+    margin: 60px auto;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    text-align: center;
+}
+
+.card h2 {
+    margin-bottom: 25px;
+    font-size: 26px;
+    font-weight: 600;
+}
+
+/* ================= DROP AREA ================= */
+#drop-area {
+    border: 2px dashed rgba(255,255,255,0.3);
+    padding: 35px 20px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-bottom: 25px;
+}
+
+#drop-area p {
+    margin: 6px 0;
+    color: #cbd5f5;
+}
+
+#drop-area:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: #22c55e;
+}
+
+#drop-area.highlight {
+    border-color: #22c55e;
+    background: rgba(34,197,94,0.1);
+}
+
+/* ================= BUTTON ================= */
+button {
+    background: linear-gradient(135deg, #22c55e, #60a5fa);
+    border: none;
+    padding: 12px 28px;
+    color: white;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-weight: 500;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(96,165,250,0.5);
+}
+
+/* ================= LOADER ================= */
+#loader {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: rgba(2, 6, 23, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid rgba(255,255,255,0.2);
+    border-top: 5px solid #22c55e;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ================= RESULTS ================= */
 .results-container {
     width: 85%;
     margin: auto;
@@ -23,12 +127,12 @@ body {
 }
 
 .result-card {
-    background: rgba(255,255,255,0.07);
-    border-radius: 18px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 20px;
     padding: 25px;
-    margin-bottom: 25px;
-    backdrop-filter: blur(15px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    margin-bottom: 30px;
+    backdrop-filter: blur(18px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
 }
 
 /* HEADER */
@@ -36,6 +140,11 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.header h3 {
+    font-size: 20px;
+    font-weight: 600;
 }
 
 /* BADGE */
@@ -46,29 +155,37 @@ body {
     font-weight: bold;
 }
 
+.badge.mild { background: #22c55e; }
+.badge.moderate { background: #facc15; color: black; }
 .badge.severe { background: #ef4444; }
 
-/* TABS */
+/* ================= TABS ================= */
 .tabs {
     display: flex;
     gap: 10px;
-    margin: 15px 0;
+    margin-top: 15px;
 }
 
 .tab-btn {
-    background: linear-gradient(135deg, #22c55e, #60a5fa);
+    background: linear-gradient(135deg, #28a745, #5cd65c);
+    color: white;
     border: none;
     padding: 8px 16px;
     border-radius: 8px;
-    color: white;
     cursor: pointer;
 }
 
+.tab-btn.active {
+    background: linear-gradient(135deg, #2ecc71, #3498db);
+}
+
+/* TAB CONTENT */
 .tab-content {
     display: none;
-    background: #f2f2f2;
+    background: #f5f5f5;
     padding: 20px;
     border-radius: 12px;
+    margin-top: 15px;
     color: #222;
 }
 
@@ -76,11 +193,12 @@ body {
     display: block;
 }
 
-/* PROGRESS BAR */
+/* ================= PROGRESS ================= */
 .progress {
     background: rgba(0,0,0,0.1);
     border-radius: 10px;
     height: 10px;
+    overflow: hidden;
     margin: 10px 0;
 }
 
@@ -89,27 +207,38 @@ body {
     background: linear-gradient(90deg, #22c55e, #60a5fa);
 }
 
-/* ACTIONS BOX */
-.actions-clean {
-    background: #f2f2f2;
-    border-radius: 14px;
-    padding: 20px;
-    color: #222;
+/* ================= ACTIONS ================= */
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
-/* DOWNLOAD */
 .download-section {
-    margin-bottom: 15px;
-    text-align: left;
+    text-align: center;
+}
+
+.download-btn {
+    background: linear-gradient(135deg, #28a745, #60a5fa);
+    border: none;
+    padding: 10px 20px;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
 }
 
 /* PRODUCTS */
-.products-section {
-    margin-top: 10px;
+.buy-links p {
+    margin: 8px 0;
 }
 
-.products-section p {
-    margin: 8px 0;
+.buy-links a {
+    color: #007bff;
+    font-weight: bold;
+}
+
+.buy-links a:hover {
+    text-decoration: underline;
 }
 
 /* STORE BUTTONS */
@@ -123,21 +252,47 @@ body {
 .store-btn {
     background: #28a745;
     color: white;
-    padding: 8px 14px;
+    padding: 8px 16px;
     border-radius: 8px;
     text-decoration: none;
+    font-size: 14px;
 }
 
 .store-btn:hover {
     background: #218838;
 }
 
-/* LINKS */
+/* ================= PREVIEW ================= */
+#preview-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.preview-img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 10px;
+    transition: 0.2s;
+}
+
+.preview-img:hover {
+    transform: scale(1.05);
+}
+
+/* ================= LINKS ================= */
 a {
-    color: #0077cc;
+    color: #177865;
     font-weight: bold;
 }
 
 a:hover {
-    color: #00c3ff;
+    color: #03b7f9;
+    text-decoration: underline;
+}
+
+a:visited {
+    color: #00e6ff;
 }
