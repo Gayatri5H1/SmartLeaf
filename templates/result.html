@@ -3,83 +3,53 @@
 
 <div class="results-container">
 
-<h1>🌿 Analysis Results</h1>
-
 {% for r in results %}
 <div class="result-card">
 
-    <div class="header">
-        <h3>{{ r.image }}</h3>
-        <span class="badge {{ r.severity|lower }}">{{ r.severity }}</span>
-    </div>
+<h3>{{ r.image }}</h3>
 
-    <!-- TABS -->
-    <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('{{loop.index}}','pred')">Prediction</button>
-        <button class="tab-btn" onclick="showTab('{{loop.index}}','treat')">Treatment</button>
-        <button class="tab-btn" onclick="showTab('{{loop.index}}','action')">Actions</button>
-    </div>
+<div class="tabs">
+<button onclick="showTab({{loop.index}},'p')">Prediction</button>
+<button onclick="showTab({{loop.index}},'t')">Treatment</button>
+<button onclick="showTab({{loop.index}},'a')">Actions</button>
+</div>
 
-    <!-- PREDICTION -->
-    <div id="pred{{loop.index}}" class="tab-content active">
-        <p><b>Crop:</b> {{ r.crop }}</p>
-        <p><b>Disease:</b> {{ r.disease }}</p>
+<div id="p{{loop.index}}" class="tab active">
+<p>{{ r.crop }}</p>
+<p>{{ r.disease }}</p>
+</div>
 
-        <div class="progress">
-            <div class="progress-bar" style="width: {{ r.confidence }}%"></div>
-        </div>
+<div id="t{{loop.index}}" class="tab">
+<p id="chem{{loop.index}}">{{ r.chemical }}</p>
 
-        <p>{{ r.confidence }}% Confidence</p>
-        <p><b>Urgency:</b> {{ r.urgency }}</p>
-    </div>
+<select onchange="translateText(this.value, {{loop.index}})">
+<option value="en">EN</option>
+<option value="hi">HI</option>
+<option value="te">TE</option>
+</select>
 
-    <!-- TREATMENT -->
-    <div id="treat{{loop.index}}" class="tab-content">
-        <p><b>Chemical Treatment</b></p>
-        <p>{{ r.chemical }}</p>
+<button onclick="playAudio('{{ r.chemical }}')">🔊</button>
+<button onclick="stopAudio()">⏹</button>
+</div>
 
-        <p><b>Organic Treatment</b></p>
-        <p>{{ r.organic }}</p>
+<div id="a{{loop.index}}" class="tab">
 
-        <p><b>Prevention</b></p>
-        <p>{{ r.prevention }}</p>
-    </div>
+<a href="/download/{{r.index}}">
+<button>Download Report</button>
+</a>
 
-    <!-- ACTIONS -->
-    <div id="action{{loop.index}}" class="tab-content">
+<h3>Products</h3>
+{% for item in r.amazon_links %}
+<p>{{ item.name }} → <a href="{{ item.link }}" target="_blank">Buy</a></p>
+{% endfor %}
 
-        <div class="actions">
+<div class="store-buttons">
+<a target="_blank" href="https://www.google.com/maps/search/agriculture+store+near+me">Agri Stores</a>
+<a target="_blank" href="https://www.google.com/maps/search/pesticide+shop+near+me">Pesticide</a>
+<a target="_blank" href="https://www.google.com/maps/search/fertilizer+shop+near+me">Fertilizer</a>
+</div>
 
-            <!-- DOWNLOAD -->
-            <div class="download-section">
-                <button class="download-btn">📄 Download Report</button>
-            </div>
-
-            <!-- PRODUCTS -->
-            <div class="buy-links">
-                <h3>🛒 Recommended Products:</h3>
-
-                {% for item in r.amazon_links %}
-                    <p>{{ item.name }} → 
-                    <a href="{{ item.link }}" target="_blank">Buy</a></p>
-                {% endfor %}
-            </div>
-
-            <!-- STORES -->
-            <div class="store-links">
-                <h3>📍 Nearby Stores:</h3>
-
-                <div class="store-buttons">
-                    <a href="#" class="store-btn">Agricultural Stores</a>
-                    <a href="#" class="store-btn">Pesticide Shops</a>
-                    <a href="#" class="store-btn">Fertilizer Stores</a>
-                    <a href="#" class="store-btn">Government Agri Centers</a>
-                </div>
-            </div>
-
-        </div>
-
-    </div>
+</div>
 
 </div>
 {% endfor %}
@@ -87,15 +57,42 @@
 </div>
 
 <script>
-function showTab(i, tab) {
+function showTab(i,t){
+["p","t","a"].forEach(x=>{
+document.getElementById(x+i).style.display="none";
+});
+document.getElementById(t+i).style.display="block";
+}
 
-    document.querySelectorAll(`#pred${i},#treat${i},#action${i}`)
-        .forEach(el => el.classList.remove("active"));
+function translateText(lang,i){
+let el=document.getElementById("chem"+i);
 
-    document.getElementById(tab + i).classList.add("active");
+fetch("/translate",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({text:el.innerText,lang:lang})
+})
+.then(r=>r.json())
+.then(d=>el.innerText=d.translated);
+}
 
-    document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
-    event.target.classList.add("active");
+let player;
+
+function playAudio(text){
+fetch("/audio",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({text})
+})
+.then(r=>r.json())
+.then(d=>{
+player=new Audio(d.audio);
+player.play();
+});
+}
+
+function stopAudio(){
+if(player){player.pause();}
 }
 </script>
 
