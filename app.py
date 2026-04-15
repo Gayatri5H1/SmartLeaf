@@ -7,6 +7,7 @@ import uuid
 import tensorflow as tf
 from gtts import gTTS
 from googletrans import Translator
+import re
 
 app = Flask(__name__)
 
@@ -37,6 +38,28 @@ from recommendation.recommender import get_recommendation
 translator = Translator()
 latest_results = []
 
+# ---------------- PRODUCT EXTRACTION ----------------
+def extract_products_from_text(text):
+    parts = re.split(r',| and | or ', text.lower())
+
+    products = []
+    stopwords = ["apply", "use", "spray", "fungicide", "pesticide", "solution", "mix"]
+
+    for p in parts:
+        p = p.strip()
+
+        # remove stopwords
+        for word in stopwords:
+            p = p.replace(word, "")
+
+        p = p.strip()
+
+        if len(p) > 3:
+            products.append(p.title())
+
+    return list(set(products))
+
+
 # ---------------- ROUTES ----------------
 @app.route("/")
 def home():
@@ -58,6 +81,7 @@ def predict():
         return "No images uploaded ❌"
 
     for index, file in enumerate(files):
+
         filename = str(uuid.uuid4()) + "_" + file.filename
         image_path = os.path.join(UPLOAD_FOLDER, filename)
         file.save(image_path)
@@ -74,31 +98,32 @@ def predict():
         except:
             recommendation = {
                 "urgency": "Unknown",
-                "chemical": "No data",
-                "organic": "No data",
-                "prevention": "No data"
+                "chemical": "No data available",
+                "organic": "No data available",
+                "prevention": "No data available"
             }
 
         chemical = recommendation.get("chemical", "")
         organic = recommendation.get("organic", "")
         prevention = recommendation.get("prevention", "")
 
-        # -------- TRANSLATION --------
-        try:
-            chemical_hi = translator.translate(chemical, dest="hi").text
-            organic_hi = translator.translate(organic, dest="hi").text
-            prevention_hi = translator.translate(prevention, dest="hi").text
+        # ---------------- PRODUCT EXTRACTION ----------------
+        products = extract_products_from_text(chemical)
 
-            chemical_te = translator.translate(chemical, dest="te").text
-            organic_te = translator.translate(organic, dest="te").text
-            prevention_te = translator.translate(prevention, dest="te").text
-        except:
-            chemical_hi = chemical
-            organic_hi = organic
-            prevention_hi = prevention
-            chemical_te = chemical
-            organic_te = organic
-            prevention_te = prevention
+        amazon_links = [
+            {
+                "name": p,
+                "link": f"https://www.amazon.in/s?k={p.replace(' ', '+')}"
+            }
+            for p in products
+        ]
+
+        # ---------------- STORE LINKS ----------------
+        store_links = {
+            "Agricultural Stores": "https://www.google.com/maps/search/agriculture+store+near+me",
+            "Pesticide Shops": "https://www.google.com/maps/search/pesticide+shop+near+me",
+            "Fertilizer Stores": "https://www.google.com/maps/search/fertilizer+shop+near+me"
+        }
 
         latest_results.append({
             "index": index,
@@ -111,30 +136,12 @@ def predict():
             "severity": severity,
             "urgency": recommendation.get("urgency", "Unknown"),
 
-            "chemical_en": chemical,
-            "organic_en": organic,
-            "prevention_en": prevention,
+            "chemical": chemical,
+            "organic": organic,
+            "prevention": prevention,
 
-            "chemical_hi": chemical_hi,
-            "organic_hi": organic_hi,
-            "prevention_hi": prevention_hi,
-
-            "chemical_te": chemical_te,
-            "organic_te": organic_te,
-            "prevention_te": prevention_te,
-
-            "amazon_links": [
-                {
-                    "name": chemical,
-                    "link": f"https://www.amazon.in/s?k={chemical.replace(' ', '+')}"
-                }
-            ] if chemical else [],
-
-            "store_links": {
-                "Agricultural Stores": "https://www.google.com/maps/search/agriculture+store+near+me",
-                "Pesticide Shops": "https://www.google.com/maps/search/pesticide+shop+near+me",
-                "Fertilizer Stores": "https://www.google.com/maps/search/fertilizer+shop+near+me"
-            }
+            "amazon_links": amazon_links,
+            "store_links": store_links
         })
 
     return redirect(url_for("result"))
@@ -159,10 +166,12 @@ def audio():
 
     return jsonify({"audio": f"/static/audio/{filename}"})
 
+
 # ---------------- REPORT ----------------
 @app.route("/download_report/<int:index>")
 def download_report(index):
     return "Report feature coming soon 🚀"
+
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
